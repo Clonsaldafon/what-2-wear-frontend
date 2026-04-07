@@ -14,7 +14,11 @@
   --container-width: #{rem(1280)};
   --container-padding-x: #{rem(80)};
 
-  --section-padding-y: #{rem(40)};
+  --section-padding-y: #{rem(20)};
 
   --transition-duration: 0.2s;
+
+  @include tablet {
+    --container-padding-x: #{rem(40)};
+  }
 }

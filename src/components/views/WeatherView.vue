@@ -1,7 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import Header from '../header/Header.vue';
+
+</script>
 
 <template>
-  <h1>What2Wear</h1>
+  <Header />
 </template>
 
 <style scoped lang="scss"></style>
