@@ -1,0 +1,20 @@
+@use './helpers/' as *;
+
+:root {
+  --color-light: #FCFAF7;
+  --color-light-alt: #FFFFFF;
+
+  --color-dark: #2C2C2C;
+  --color-dark-alt: #7F8C8D;
+
+  --color-gray: #C8C8C8;
+
+  --font-family: 'Manrope', system-ui, sans-serif;
+
+  --container-width: #{rem(1280)};
+  --container-padding-x: #{rem(80)};
+
+  --section-padding-y: #{rem(40)};
+
+  --transition-duration: 0.2s;
+}
