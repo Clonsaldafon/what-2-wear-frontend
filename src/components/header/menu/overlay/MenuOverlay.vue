@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import CrossButton from '@/components/buttons/CrossButton.vue'
 import Button from '@/components/buttons/Button.vue'
-
-import { ROUTES } from '@/utils/constants'
 import MenuOverlayItem from './MenuOverlayItem.vue';
 
-defineProps<{
+import { ROUTES } from '@/utils/constants'
+
+const props = defineProps<{
   isAuthenticated: boolean
+  messenger: string | null
   onClose: () => void
   onLogout: () => void
 }>()
@@ -84,10 +85,7 @@ defineProps<{
           </MenuOverlayItem>
         </li>
         <li class="menu-overlay__item">
-          <Button
-            v-if="!isAuthenticated"
-            class="hidden-tablet"
-          >
+          <Button v-if="!isAuthenticated && !messenger">
             <template #icon>
               <svg
                 width="24" height="24" viewBox="0 0 24 24"
@@ -102,8 +100,7 @@ defineProps<{
             <template #text>Войти</template>
           </Button>
           <Button
-            v-else
-            class="hidden-tablet"
+            v-else-if="!messenger"
             @click="onLogout"
           >
             <template #icon>

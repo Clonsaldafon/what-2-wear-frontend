@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useMiniApp } from 'vue-tg'
 
 import Button from '../buttons/Button.vue'
 import Logo from '../Logo.vue'
@@ -11,14 +12,27 @@ import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
 const authStore = useAuthStore()
+const tgMiniApp = useMiniApp()
 
 const isAuthenticated = authStore.isAuthenticated
+const messenger = authStore.messenger
 
 const isMenuOpen = ref(false)
 
+const handleMessengerLogin = async () => {
+  const messengerType = 'telegram'
+  const messengerUserId = String(tgMiniApp?.initDataUnsafe?.user?.id)
+  const initData = tgMiniApp.initData
+
+  if (!authStore.isAuthenticated && tgMiniApp.initData) {
+    await authStore.messengerLogin(messengerType, messengerUserId, initData)
+  }
+}
+
+handleMessengerLogin()
+
 const openMenu = () => {
   isMenuOpen.value = true
-  console.log('open')
 }
 
 const closeMenu = () => {
@@ -37,7 +51,7 @@ const onLogout = () => {
     <Menu :isAuthenticated="isAuthenticated" />
     <div class="header__actions">
       <Button
-        v-if="!isAuthenticated"
+        v-if="!isAuthenticated && !messenger"
         class="hidden-tablet"
       >
         <template #icon>
@@ -54,7 +68,7 @@ const onLogout = () => {
         <template #text>Войти</template>
       </Button>
       <Button
-        v-else
+        v-else-if="!messenger"
         class="hidden-tablet"
         @click="onLogout"
       >
@@ -79,6 +93,7 @@ const onLogout = () => {
   <MenuOverlay
     :class="`${!isMenuOpen ? 'visually-hidden' : ''}`"
     :isAuthenticated="isAuthenticated"
+    :messenger="messenger"
     :onClose="closeMenu"
     :onLogout="onLogout"
   />

@@ -5,7 +5,8 @@ import apiClient from '@/services/api'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     accessToken: localStorage.getItem('accessToken') || null,
-    refreshToken: localStorage.getItem('refreshToken') || null
+    refreshToken: localStorage.getItem('refreshToken') || null,
+    messenger: localStorage.getItem('messenger') || null
   }),
   getters: {
     isAuthenticated: (state) => !!state.accessToken
@@ -29,6 +30,8 @@ export const useAuthStore = defineStore('auth', {
     },
     async messengerLogin(messengerType: string, messengerUserId: string, initData?: string) {
       try {
+        console.log(initData)
+
         const response = await apiClient.post('/auth/messenger/', {
           messenger_type: messengerType,
           messenger_user_id: messengerUserId,
@@ -37,9 +40,11 @@ export const useAuthStore = defineStore('auth', {
 
         this.accessToken = response.data.access_token
         this.refreshToken = response.data.refresh_token
+        this.messenger = messengerType
 
         if (this.accessToken) localStorage.setItem('accessToken', this.accessToken)
         if (this.refreshToken) localStorage.setItem('refreshToken', this.refreshToken)
+        localStorage.setItem('messenger', 'telegram')
 
         return true
       } catch (error) {
@@ -67,6 +72,7 @@ export const useAuthStore = defineStore('auth', {
 
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
+      localStorage.removeItem('messenger')
     }
   }
 })

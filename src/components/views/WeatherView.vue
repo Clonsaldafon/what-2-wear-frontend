@@ -2,23 +2,6 @@
 import Header from '../header/Header.vue'
 import WeatherCard from '../weather/WeatherCard.vue'
 
-import { useAuthStore } from '@/stores/auth'
-import { useMiniApp } from 'vue-tg'
-
-const authStore = useAuthStore()
-const tgMiniApp = useMiniApp()
-
-const handleMessengerLogin = async () => {
-  const messengerType = 'telegram'
-  const messengerUserId = String(tgMiniApp?.initDataUnsafe?.user?.id)
-  const initData = tgMiniApp.initData
-
-  if (!authStore.isAuthenticated) {
-    await authStore.messengerLogin(messengerType, messengerUserId, initData)
-  }
-}
-
-handleMessengerLogin()
 </script>
 
 <template>
