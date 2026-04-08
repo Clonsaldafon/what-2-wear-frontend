@@ -2,6 +2,9 @@
 import { ROUTES } from '@/utils/constants';
 import MenuItem from './MenuItem.vue';
 
+const props = defineProps<{
+  isAuthenticated: boolean
+}>()
 </script>
 
 <template>
@@ -21,7 +24,10 @@ import MenuItem from './MenuItem.vue';
           :selected="false"
         />
       </li>
-      <li class="menu__item visually-hidden">
+      <li
+        v-if="isAuthenticated"
+        class="menu__item visually-hidden"
+      >
         <MenuItem
           :route="'/'"
           :text="'Профиль'"

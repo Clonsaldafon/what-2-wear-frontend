@@ -6,7 +6,9 @@ import { ROUTES } from '@/utils/constants'
 import MenuOverlayItem from './MenuOverlayItem.vue';
 
 defineProps<{
+  isAuthenticated: boolean
   onClose: () => void
+  onLogout: () => void
 }>()
 </script>
 
@@ -61,6 +63,7 @@ defineProps<{
         </li>
         <li class="menu-overlay__item visually-hidden">
           <MenuOverlayItem
+            v-if="isAuthenticated"
             :route="`/`"
             :text="'Профиль'"
             :selected="false"
@@ -81,7 +84,10 @@ defineProps<{
           </MenuOverlayItem>
         </li>
         <li class="menu-overlay__item">
-          <Button>
+          <Button
+            v-if="!isAuthenticated"
+            class="hidden-tablet"
+          >
             <template #icon>
               <svg
                 width="24" height="24" viewBox="0 0 24 24"
@@ -94,6 +100,23 @@ defineProps<{
               </svg>
             </template>
             <template #text>Войти</template>
+          </Button>
+          <Button
+            v-else
+            class="hidden-tablet"
+            @click="onLogout"
+          >
+            <template #icon>
+              <svg
+                width="24" height="24" viewBox="0 0 24 24"
+                fill="none">
+              <path
+                d="M10.504 21H17.5C18.605 21 19.5 19.849 19.5 18.429V5.57C19.5 4.151 18.605 3 17.5 3H10.5M8 15.5L4.5 12L8 8.5M14.5 11.996H4.5"
+                stroke="#FCFAF7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+              />
+            </svg>
+            </template>
+            <template #text>Выйти</template>
           </Button>
         </li>
       </ul>
