@@ -30,8 +30,6 @@ export const useAuthStore = defineStore('auth', {
     },
     async messengerLogin(messengerType: string, messengerUserId: string, initData?: string) {
       try {
-        console.log(initData)
-
         const response = await apiClient.post('/auth/messenger/', {
           messenger_type: messengerType,
           messenger_user_id: messengerUserId,

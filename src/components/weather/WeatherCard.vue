@@ -101,6 +101,7 @@ const props = defineProps<{
       display: flex;
       flex-direction: column;
       row-gap: rem(10);
+      white-space: nowrap;
 
       &-title {
         @include fluid-text(14, 12);

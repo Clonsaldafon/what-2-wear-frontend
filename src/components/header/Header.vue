@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useMiniApp } from 'vue-tg'
+import { onMounted, ref } from 'vue'
+import { isTMA, retrieveLaunchParams, retrieveRawInitData } from '@tma.js/sdk-vue';
 
 import Button from '../buttons/Button.vue'
 import Logo from '../Logo.vue'
@@ -12,24 +12,50 @@ import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
 const authStore = useAuthStore()
-const tgMiniApp = useMiniApp()
-
 const isAuthenticated = authStore.isAuthenticated
+const isMenuOpen = ref(false)
+const isTelegram = ref(false)
 const messenger = authStore.messenger
 
-const isMenuOpen = ref(false)
+const initDataRaw = ref<string | undefined>(undefined);
+const initDataParsed = ref<any>(null);
 
-const handleMessengerLogin = async () => {
-  const messengerType = 'telegram'
-  const messengerUserId = String(tgMiniApp?.initDataUnsafe?.user?.id)
-  const initData = tgMiniApp.initData
+onMounted(async () => {
+  try {
+    isTelegram.value = await isTMA('complete')
+    
+    if (isTelegram.value) {
+      const { tgWebAppData } = retrieveLaunchParams()
+      initDataParsed.value = tgWebAppData
+      initDataRaw.value = retrieveRawInitData()
 
-  if (!authStore.isAuthenticated && tgMiniApp.initData) {
-    await authStore.messengerLogin(messengerType, messengerUserId, initData)
+      if (!authStore.isAuthenticated) {
+        const telegramUserId = initDataParsed.value?.user?.id
+        
+        if (telegramUserId) {
+          const success = await authStore.messengerLogin(
+            'telegram',
+            String(telegramUserId),
+            initDataRaw.value
+          )
+          
+          if (success) {
+            console.log('Авторизация через Telegram успешна')
+          } else {
+            console.error('Не удалось авторизоваться через Telegram')
+          }
+        } else {
+          console.warn('Не удалось получить Telegram user id из initData')
+        }
+      } else {
+        console.log('Пользователь уже авторизован, пропускаем messengerLogin')
+      }
+    }
+  } catch (err) {
+    console.error('Ошибка при проверке окружения:', err)
+    isTelegram.value = false
   }
-}
-
-handleMessengerLogin()
+})
 
 const openMenu = () => {
   isMenuOpen.value = true

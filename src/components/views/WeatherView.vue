@@ -1,7 +1,24 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import CitySearch from '../CitySearch.vue'
 import Header from '../header/Header.vue'
 import WeatherCard from '../weather/WeatherCard.vue'
 
+import { useWeatherStore } from '@/stores/weather'
+
+const weatherStore = useWeatherStore()
+
+const onCitySearch = async (cityName: string) => {
+  weatherStore.setCity(cityName)
+
+  await weatherStore.fetchCurrentWeather()
+}
+
+onMounted(async () => {
+  if (weatherStore.city) {
+    await weatherStore.fetchCurrentWeather()
+  }
+})
 </script>
 
 <template>
@@ -9,14 +26,16 @@ import WeatherCard from '../weather/WeatherCard.vue'
   <section class="weather section container">
     <h1 class="section__title h1 visually-hidden">Погода в текущий момент</h1>
     <div class="weather__body">
-      <!-- TODO: Поиск города -->
+      <CitySearch @search="onCitySearch" />
 
       <WeatherCard
-        :city="'Челябинск'"
-        :temperature="14"
-        :feelsLike="12"
-        :humidity="36"
-        :windSpeed="3"
+        v-if="weatherStore.currentWeather"
+        class="weather__card"
+        :city="weatherStore.currentWeather.city"
+        :temperature="weatherStore.currentWeather.temperature"
+        :feelsLike="weatherStore.currentWeather.feels_like"
+        :humidity="weatherStore.currentWeather.humidity"
+        :windSpeed="weatherStore.currentWeather.wind_speed"
       >
         <template #icon>
           <svg
@@ -41,7 +60,9 @@ import WeatherCard from '../weather/WeatherCard.vue'
 .weather {
   &__body {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    row-gap: rem(40)
   }
 
   &__current-icon {
