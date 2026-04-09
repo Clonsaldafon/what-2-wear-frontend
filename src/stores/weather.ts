@@ -1,0 +1,119 @@
+import { ref } from 'vue'
+
+import { defineStore } from 'pinia'
+import { AxiosError } from 'axios';
+
+import apiClient from '@/services/api'
+
+interface CitySuggestion {
+  id: number
+  name: string
+  full_name: string
+}
+
+interface CurrentWeather {
+  city: string
+  temperature: number
+  feels_like: number
+  humidity: number
+  wind_speed: number
+  description: string
+  icon: string
+}
+
+export const useWeatherStore = defineStore('weather', () => {
+  const city = ref(localStorage.getItem('weatherCity') || '')
+  const suggestions = ref<CitySuggestion[]>([])
+  const currentWeather = ref<CurrentWeather | null>(null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+  let abortController: AbortController | null = null
+
+  const fetchCitySuggestions = async (query: string) => {
+    if (abortController) {
+      abortController.abort()
+    }
+
+    if (!query || query.length < 2) {
+      suggestions.value = []
+      error.value = null
+      return
+    }
+
+    loading.value = true
+    error.value = null
+    suggestions.value = []
+
+    abortController = new AbortController()
+
+    try {
+      const response = await apiClient.get('/weather/city-autocomplete/', {
+        params: { q: query },
+        signal: abortController.signal
+      })
+
+      suggestions.value = response.data
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return
+
+      const axiosError = err as AxiosError<{ message: string }>;
+      error.value = axiosError.response?.data?.message || 'Ошибка при загрузке городов';
+
+      suggestions.value = []
+    } finally {
+      loading.value = false
+      abortController = null
+    }
+  }
+
+  const setCity = (cityName: string) => {
+    city.value = cityName
+    localStorage.setItem('weatherCity', cityName)
+
+    clearSuggestions()
+  }
+
+  const clearCity = () => {
+    city.value = ''
+    localStorage.removeItem('weatherCity')
+
+    clearSuggestions()
+    currentWeather.value = null
+  }
+
+  const clearSuggestions = () => {
+    suggestions.value = []
+    error.value = null
+  }
+
+  const fetchCurrentWeather = async () => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data } = await apiClient.get<CurrentWeather>('/weather/current/', {
+        params: { city: city.value }
+      })
+
+      currentWeather.value = data
+    } catch (err) {
+      const axiosError = err as AxiosError<{ message: string }>;
+      error.value = axiosError.response?.data?.message || 'Ошибка при загрузке прогноза погоды';
+
+      throw error
+    }
+  }
+
+  return {
+    city,
+    suggestions,
+    currentWeather,
+    loading,
+    error,
+    fetchCitySuggestions,
+    setCity,
+    clearCity,
+    clearSuggestions,
+    fetchCurrentWeather
+  }
+})
