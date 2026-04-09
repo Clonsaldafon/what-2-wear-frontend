@@ -73,8 +73,11 @@ const onLogout = () => {
 
 <template>
   <div class="header container">
-    <Logo />
-    <Menu :isAuthenticated="isAuthenticated" />
+    <Logo class="header__logo" />
+    <Menu
+      class="header__menu"
+      :isAuthenticated="isAuthenticated"
+    />
     <div class="header__actions">
       <Button
         v-if="!isAuthenticated && !messenger"
@@ -111,7 +114,7 @@ const onLogout = () => {
         <template #text>Выйти</template>
       </Button>
       <BurgerButton
-        class="visible-tablet"
+        class="header__burger-button visible-tablet"
         @click="openMenu"
       />
     </div>
@@ -129,12 +132,25 @@ const onLogout = () => {
 @use '../../assets/styles/helpers/' as *;
 
 .header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding-top: rem(60);
 
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &__logo {
+    justify-self: start;
+  }
+
+  &__menu {
+    justify-self: center;
+  }
+
   &__actions {
+    justify-self: end;
     display: flex;
     align-items: center;
     column-gap: rem(12);
