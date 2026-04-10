@@ -32,7 +32,7 @@ const props = defineProps<{
       </div>
       <div class="weather-card__footer-item">
         <div class="weather-card__footer-item-title">Ветер</div>
-        <div class="weather-card__footer-item-value">{{ windSpeed }} м/с</div>
+        <div class="weather-card__footer-item-value">{{ Math.round(windSpeed * 1000 / 3600) }} м/с</div>
       </div>
     </footer>
   </article>
@@ -95,7 +95,9 @@ const props = defineProps<{
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     column-gap: rem(80);
+    row-gap: rem(20);
 
     &-item {
       display: flex;

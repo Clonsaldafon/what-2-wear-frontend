@@ -7,17 +7,15 @@ defineProps<{
 </script>
 
 <template>
-  <div :class="`menu-overlay-item ${selected ? 'menu-overlay-item--selected' : ''}`">
-    <a
-      class="menu-overlay-item__link"
-      :href="`/${route}`"
-    >
-      {{ text }}
-    </a>
+  <a
+    :class="`menu-overlay-item ${selected ? 'menu-overlay-item--selected' : ''}`"
+    :href="`/${route}`"
+  >
+    <div class="menu-overlay-item__text">{{ text }}</div>
     <div class="menu-overlay-item__icon">
       <slot name="icon"></slot>
     </div>
-  </div>
+  </a>
 </template>
 
 <style scoped lang="scss">
@@ -27,22 +25,20 @@ defineProps<{
   display: flex;
   align-items: center;
   column-gap: rem(10);
+  padding: rem(12) rem(24);
   position: relative;
+  border-radius: rem(30);
+  transition: var(--transition-duration);
 
-  &--selected {
-    &::before {
-      position: absolute;
-      content: '';
-      top: 50%;
-      left: rem(-30);
-      transform: translateY(-50%);
-      width: rem(15);
-      height: rem(2);
-      background-color: var(--color-dark);
-    }
+  @include hover {
+    background-color: var(--color-accent);
   }
 
-  &__link {
+  &--selected {
+    background-color: var(--color-accent);
+  }
+
+  &__text {
     @include fluid-text(24, 20);
   }
 

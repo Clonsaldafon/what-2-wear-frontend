@@ -127,8 +127,9 @@ const props = defineProps<{
 .menu-overlay {
   position: absolute;
   inset: 0;
-  padding: rem(60);
+  padding: rem(40);
   background-color: var(--color-light);
+  z-index: 10;
 
   &__close-button-wrapper {
     display: flex;
@@ -139,7 +140,7 @@ const props = defineProps<{
     @include flex-center;
 
     flex-direction: column;
-    row-gap: rem(30);
+    row-gap: rem(10);
     min-height: 80vh;
   }
 
