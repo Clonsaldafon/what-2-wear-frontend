@@ -21,10 +21,21 @@ interface CurrentWeather {
   icon: string
 }
 
+export interface HourlyForecast {
+  datetime: string
+  temperature: number
+  phrase: string
+  precipitation_probability: number
+  has_precipitation: boolean
+  is_daylight: boolean
+  icon: string
+}
+
 export const useWeatherStore = defineStore('weather', () => {
   const city = ref(localStorage.getItem('weatherCity') || '')
   const suggestions = ref<CitySuggestion[]>([])
   const currentWeather = ref<CurrentWeather | null>(null)
+  const hourlyForecast = ref<HourlyForecast[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   let abortController: AbortController | null = null
@@ -74,6 +85,7 @@ export const useWeatherStore = defineStore('weather', () => {
   }
 
   const clearCity = () => {
+    console.trace('Trace clearCity')
     city.value = ''
     localStorage.removeItem('weatherCity')
 
@@ -101,6 +113,35 @@ export const useWeatherStore = defineStore('weather', () => {
       error.value = axiosError.response?.data?.message || 'Ошибка при загрузке прогноза погоды';
 
       throw error
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  const fetchHourlyForecast = async (hours: number = 12) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data } = await apiClient.get<HourlyForecast[]>('/weather/hourly/', {
+        params: {
+          city: city.value,
+          hours: hours
+        }
+      })
+
+      hourlyForecast.value = data
+
+      hourlyForecast.value.forEach(item => {
+        item.icon = item.icon.toString()
+      })
+    } catch (err) {
+      const axiosError = err as AxiosError<{ message: string }>;
+      error.value = axiosError.response?.data?.message || 'Ошибка при загрузке почасового прогноза';
+
+      throw error
+    } finally {
+      loading.value = false;
     }
   }
 
@@ -108,12 +149,14 @@ export const useWeatherStore = defineStore('weather', () => {
     city,
     suggestions,
     currentWeather,
+    hourlyForecast,
     loading,
     error,
     fetchCitySuggestions,
     setCity,
     clearCity,
     clearSuggestions,
-    fetchCurrentWeather
+    fetchCurrentWeather,
+    fetchHourlyForecast
   }
 })

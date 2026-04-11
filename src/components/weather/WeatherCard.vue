@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import WeatherIcon from './WeatherIcon.vue';
+
 const props = defineProps<{
   city: string
   temperature: number
   feelsLike: number
   humidity: number
   windSpeed: number
+  description: string
+  icon: string
 }>()
 </script>
 
@@ -18,7 +22,10 @@ const props = defineProps<{
         </div>
       </div>
       <div class="weather-card__icon">
-        <slot name="icon"></slot>
+        <WeatherIcon
+          :iconCode="icon"
+          :description="description"
+        />
       </div>
     </div>
     <footer class="weather-card__footer">
@@ -46,8 +53,8 @@ const props = defineProps<{
   flex-direction: column;
   row-gap: rem(20);
   padding: rem(30);
-  color: var(--color-light);
-  background: linear-gradient(120deg, #F5A345, #F0CE0A);
+  color: var(--color-dark);
+  background-color: var(--color-light-alt);
   border-radius: rem(30);
   box-shadow: 0 rem(4) rem(20) 0 rgba(0, 0, 0, 0.25);
 
@@ -55,7 +62,8 @@ const props = defineProps<{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: rem(1) solid rgba(252, 250, 247, 0.15);
+    column-gap: rem(10);
+    border-bottom: rem(1) solid var(--color-gray);
 
     &:not(:last-child) {
       padding-bottom: rem(20);

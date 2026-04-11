@@ -19,15 +19,31 @@ defineProps<{
 @use '../../../assets/styles/helpers/' as *;
 
 .menu-item {
-  padding-bottom: rem(8);
-  border-bottom: rem(2) solid transparent;
+  position: relative;
+  padding-block: rem(16);
 
   @include hover {
-    border-color: var(--color-dark);
+    color: var(--color-accent);
+    
+    &::after {
+      background-color: var(--color-accent);
+    }
   }
 
   &--selected {
-    border-color: var(--color-dark);
+    &::after {
+      background-color: var(--color-accent);
+    }
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: rem(2);
+    transition-duration: var(--transition-duration);
   }
 }
 </style>

@@ -236,11 +236,12 @@ const moveSelection = (direction: number) => {
 
   &__item {
     padding: rem(10) rem(15);
+    border: rem(1) solid transparent;
     border-radius: rem(30);
     line-height: 1.2;
 
     &--active {
-      background-color: var(--color-accent);
+      border-color: var(--color-accent);
     }
   }
 

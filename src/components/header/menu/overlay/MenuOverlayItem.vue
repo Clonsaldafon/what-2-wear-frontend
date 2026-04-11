@@ -27,15 +27,16 @@ defineProps<{
   column-gap: rem(10);
   padding: rem(12) rem(24);
   position: relative;
+  border: rem(1) solid transparent;
   border-radius: rem(30);
   transition: var(--transition-duration);
 
   @include hover {
-    background-color: var(--color-accent);
+    border-color: var(--color-accent);
   }
 
   &--selected {
-    background-color: var(--color-accent);
+    border-color: var(--color-accent);
   }
 
   &__text {

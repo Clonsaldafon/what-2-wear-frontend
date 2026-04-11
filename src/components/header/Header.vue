@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { isTMA, retrieveLaunchParams, retrieveRawInitData } from '@tma.js/sdk-vue';
+
+import router from '@/router'
+
+import { isTMA, retrieveLaunchParams, retrieveRawInitData } from '@tma.js/sdk-vue'
 
 import Button from '../buttons/Button.vue'
 import Logo from '../Logo.vue'
@@ -9,7 +12,6 @@ import BurgerButton from '../buttons/BurgerButton.vue'
 import MenuOverlay from './menu/overlay/MenuOverlay.vue'
 
 import { useAuthStore } from '@/stores/auth'
-import router from '@/router'
 
 const authStore = useAuthStore()
 const isAuthenticated = authStore.isAuthenticated
@@ -22,8 +24,8 @@ const initDataParsed = ref<any>(null);
 
 onMounted(async () => {
   try {
-    isTelegram.value = await isTMA('complete')
-    
+    isTelegram.value = isTMA()
+  
     if (isTelegram.value) {
       const { tgWebAppData } = retrieveLaunchParams()
       initDataParsed.value = tgWebAppData
@@ -50,6 +52,8 @@ onMounted(async () => {
       } else {
         console.log('Пользователь уже авторизован, пропускаем messengerLogin')
       }
+    } else {
+      console.log('Вход через браузер')
     }
   } catch (err) {
     console.error('Ошибка при проверке окружения:', err)

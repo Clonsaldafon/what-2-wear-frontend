@@ -127,7 +127,7 @@ const props = defineProps<{
 .menu-overlay {
   position: absolute;
   inset: 0;
-  padding: rem(40);
+  padding: rem(60) rem(40);
   background-color: var(--color-light);
   z-index: 10;
 
