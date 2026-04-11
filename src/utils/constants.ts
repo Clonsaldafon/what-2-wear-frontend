@@ -1,3 +1,4 @@
 export const ROUTES = {
-  WEATHER: 'weather'
+  WEATHER: 'weather',
+  CLOTHES: 'clothes'
 }

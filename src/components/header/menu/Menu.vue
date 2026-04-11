@@ -1,10 +1,19 @@
 <script setup lang="ts">
-import { ROUTES } from '@/utils/constants';
-import MenuItem from './MenuItem.vue';
+import { ref } from 'vue'
+
+import MenuItem from './MenuItem.vue'
+
+import { ROUTES } from '@/utils/constants'
 
 const props = defineProps<{
   isAuthenticated: boolean
 }>()
+
+const emit = defineEmits(['clothesMessageOpen'])
+
+const onClothesMessageOpen = () => {
+  emit('clothesMessageOpen')
+}
 </script>
 
 <template>
@@ -19,9 +28,10 @@ const props = defineProps<{
       </li>
       <li class="menu__item">
         <MenuItem
-          :route="'/'"
+          :route="ROUTES.CLOTHES"
           :text="'Одежда'"
           :selected="false"
+          @clothes="onClothesMessageOpen"
         />
       </li>
       <li

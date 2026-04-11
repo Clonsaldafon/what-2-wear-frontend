@@ -11,6 +11,13 @@ const props = defineProps<{
   onClose: () => void
   onLogout: () => void
 }>()
+
+const emit = defineEmits(['clothesMessageOpen'])
+
+const onClothesMessageOpen = () => {
+  emit('clothesMessageOpen')
+  props.onClose()
+}
 </script>
 
 <template>
@@ -25,7 +32,7 @@ const props = defineProps<{
       <ul class="menu-overlay__list">
         <li class="menu-overlay__item">
           <MenuOverlayItem
-            :route="`/${ROUTES.WEATHER}`"
+            :route="ROUTES.WEATHER"
             :text="'Погода'"
             :selected="true"
           >
@@ -46,9 +53,10 @@ const props = defineProps<{
         </li>
         <li class="menu-overlay__item">
           <MenuOverlayItem
-            :route="`/`"
+            :route="ROUTES.CLOTHES"
             :text="'Одежда'"
             :selected="false"
+            @clothes="onClothesMessageOpen"
           >
             <template #icon>
               <svg
@@ -85,7 +93,10 @@ const props = defineProps<{
           </MenuOverlayItem>
         </li>
         <li class="menu-overlay__item">
-          <Button v-if="!isAuthenticated && !messenger">
+          <Button
+            v-if="!isAuthenticated && !messenger"
+            :hasIcon="true"
+          >
             <template #icon>
               <svg
                 width="24" height="24" viewBox="0 0 24 24"
@@ -101,6 +112,7 @@ const props = defineProps<{
           </Button>
           <Button
             v-else-if="!messenger"
+            :hasIcon="true"
             @click="onLogout"
           >
             <template #icon>

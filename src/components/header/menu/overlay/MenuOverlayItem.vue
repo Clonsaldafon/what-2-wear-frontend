@@ -1,21 +1,42 @@
 <script setup lang="ts">
-defineProps<{
+import { useRouter } from 'vue-router'
+
+import { useAuthStore } from '@/stores/auth'
+
+import { ROUTES } from '@/utils/constants'
+
+const props = defineProps<{
   route: string
   text: string
   selected: boolean
 }>()
+
+const emit = defineEmits(['clothes'])
+
+const router = useRouter()
+
+const authStore = useAuthStore()
+
+const navigate = async (route: string) => {
+  if (props.route === ROUTES.CLOTHES && !authStore.isAuthenticated) {
+    emit('clothes')
+    return
+  }
+
+  router.push(`/${route}`)
+}
 </script>
 
 <template>
-  <a
+  <div
     :class="`menu-overlay-item ${selected ? 'menu-overlay-item--selected' : ''}`"
-    :href="`/${route}`"
+    @click="navigate(route)"
   >
     <div class="menu-overlay-item__text">{{ text }}</div>
     <div class="menu-overlay-item__icon">
       <slot name="icon"></slot>
     </div>
-  </a>
+  </div>
 </template>
 
 <style scoped lang="scss">
@@ -30,6 +51,8 @@ defineProps<{
   border: rem(1) solid transparent;
   border-radius: rem(30);
   transition: var(--transition-duration);
+  user-select: none;
+  cursor: pointer;
 
   @include hover {
     border-color: var(--color-accent);

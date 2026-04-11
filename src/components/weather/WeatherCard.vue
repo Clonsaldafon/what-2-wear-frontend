@@ -53,6 +53,7 @@ const props = defineProps<{
   flex-direction: column;
   row-gap: rem(20);
   padding: rem(30);
+  line-height: 0.75;
   color: var(--color-dark);
   background-color: var(--color-light-alt);
   border-radius: rem(30);

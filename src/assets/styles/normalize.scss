@@ -169,6 +169,7 @@ a {
 /**
   Убирает серую подсветку при тапе на мобильных устройствах (iOS/Android)
  */
+div,
 button {
   -webkit-tap-highlight-color: transparent;
 }

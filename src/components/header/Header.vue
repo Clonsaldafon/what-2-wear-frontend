@@ -12,6 +12,7 @@ import BurgerButton from '../buttons/BurgerButton.vue'
 import MenuOverlay from './menu/overlay/MenuOverlay.vue'
 
 import { useAuthStore } from '@/stores/auth'
+import { ROUTES } from '@/utils/constants'
 
 const authStore = useAuthStore()
 const isAuthenticated = authStore.isAuthenticated
@@ -61,6 +62,8 @@ onMounted(async () => {
   }
 })
 
+const emit = defineEmits(['clothesMessageOpen'])
+
 const openMenu = () => {
   isMenuOpen.value = true
 }
@@ -71,7 +74,7 @@ const closeMenu = () => {
 
 const onLogout = () => {
   authStore.logout()
-  router.push('/weather')
+  router.push(ROUTES.WEATHER)
 }
 </script>
 
@@ -81,11 +84,13 @@ const onLogout = () => {
     <Menu
       class="header__menu"
       :isAuthenticated="isAuthenticated"
+      @clothesMessageOpen="emit('clothesMessageOpen')"
     />
     <div class="header__actions">
       <Button
         v-if="!isAuthenticated && !messenger"
         class="hidden-tablet"
+        :hasIcon="true"
       >
         <template #icon>
           <svg
@@ -103,6 +108,7 @@ const onLogout = () => {
       <Button
         v-else-if="!messenger"
         class="hidden-tablet"
+        :hasIcon="true"
         @click="onLogout"
       >
         <template #icon>
@@ -129,6 +135,7 @@ const onLogout = () => {
     :messenger="messenger"
     :onClose="closeMenu"
     :onLogout="onLogout"
+    @clothesMessageOpen="emit('clothesMessageOpen')"
   />
 </template>
 

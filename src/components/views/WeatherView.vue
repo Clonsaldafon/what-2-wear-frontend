@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import CitySearch from '../CitySearch.vue'
 import Header from '../header/Header.vue'
@@ -8,27 +8,45 @@ import WeatherHourly from '../weather/hourly/WeatherHourly.vue'
 
 import { useWeatherStore } from '@/stores/weather'
 import { storeToRefs } from 'pinia'
+import Overlay from '../Overlay.vue'
+import ClothesMessageAuthenticate from '../clothes/ClothesMessageAuthenticate.vue'
 
 const weatherStore = useWeatherStore()
 const { currentWeather, hourlyForecast, loading, error } = storeToRefs(weatherStore)
 
+const isModalOpen = ref(false)
+const isClothesMessageOpen = ref(false)
+
 const onCitySearch = async (cityName: string) => {
   weatherStore.setCity(cityName)
 
-  // await weatherStore.fetchCurrentWeather()
-  // await weatherStore.fetchHourlyForecast()
+  await weatherStore.fetchCurrentWeather()
+  await weatherStore.fetchHourlyForecast()
 }
 
 onMounted(async () => {
   if (weatherStore.city) {
-    // await weatherStore.fetchCurrentWeather()
-    // await weatherStore.fetchHourlyForecast()
+    await weatherStore.fetchCurrentWeather()
+    await weatherStore.fetchHourlyForecast()
   }
 })
+
+const onClothesMessageOpen = () => {
+  isClothesMessageOpen.value = true
+}
+
+const onModalOpen = () => {
+  isModalOpen.value = true
+}
+
+const onModalClose = () => {
+  isModalOpen.value = false
+  isClothesMessageOpen.value = false
+}
 </script>
 
 <template>
-  <Header />
+  <Header @clothesMessageOpen="onClothesMessageOpen" />
   <section class="weather section container">
     <h1 class="section__title h1 visually-hidden">Погода в текущий момент</h1>
     <div class="weather__body">
@@ -48,6 +66,17 @@ onMounted(async () => {
       <WeatherHourly :forecast="hourlyForecast" />
     </div>
   </section>
+  <Overlay
+    v-if="isModalOpen || isClothesMessageOpen"
+    :onClose="onModalClose"
+  >
+    <template
+      v-if="isClothesMessageOpen"
+      #modal
+    >
+      <ClothesMessageAuthenticate />
+    </template>
+  </Overlay>
 </template>
 
 <style scoped lang="scss">

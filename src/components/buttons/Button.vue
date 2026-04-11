@@ -2,8 +2,10 @@
 const props = withDefaults(
   defineProps<{
     type?: string
+    hasIcon?: boolean
   }>(), {
-    type: 'button'
+    type: 'button',
+    hasIcon: false
   }
 )
 </script>
@@ -14,7 +16,7 @@ const props = withDefaults(
     class="button"
     type="button"
   >
-    <div class="button__icon">
+    <div v-if="hasIcon" class="button__icon">
       <slot name="icon"></slot>
     </div>
     <div class="button__text">
@@ -33,7 +35,13 @@ const props = withDefaults(
   padding: rem(12) rem(32);
   color: var(--color-light);
   background-color: var(--color-dark);
+  border: rem(1) solid var(--color-dark);
   border-radius: rem(30);
+
+  @include hover {
+    color: var(--color-dark);
+    background-color: transparent;
+  }
 
   &__icon {
     @include square(24);
