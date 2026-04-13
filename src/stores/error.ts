@@ -18,7 +18,7 @@ export const useErrorStore = defineStore('error', () => {
     if (!isFatal) {
       setTimeout(() => {
         clearError()
-      }, 5000)
+      }, 10000)
     }
   };
 

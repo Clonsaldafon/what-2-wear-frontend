@@ -17,13 +17,12 @@ import Button from '../buttons/Button.vue';
       </svg>
     </div>
     <div class="clothes-message-authenticate__body">
-      <h4 class="clothes-message-authenticate__title h4">Разблокируйте<br/>персональные рекомендации</h4>
+      <h4 class="clothes-message-authenticate__title h4">Персональные рекомендации</h4>
       <div class="clothes-message-authenticate__description">
         <p>
           Войдите или создайте аккаунт, 
-          чтобы получать рекомендации 
-          по одежде с учетом вашего местоположения 
-          и погодных условий
+          чтобы получать советы по одежде 
+          с учётом погоды и вашего местоположения
         </p>
       </div>
     </div>
@@ -63,6 +62,11 @@ import Button from '../buttons/Button.vue';
     display: flex;
     flex-direction: column;
     row-gap: rem(10);
+    
+    text-align: center;
+  }
+
+  &__title {
     text-align: center;
   }
 
@@ -70,6 +74,10 @@ import Button from '../buttons/Button.vue';
     @include fluid-text(18, 14);
 
     color: var(--color-dark-alt);
+  }
+
+  @include tablet {
+    padding: rem(20);
   }
 }
 

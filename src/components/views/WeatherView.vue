@@ -10,6 +10,7 @@ import { useWeatherStore } from '@/stores/weather'
 import { storeToRefs } from 'pinia'
 import Overlay from '../Overlay.vue'
 import ClothesMessageAuthenticate from '../clothes/ClothesMessageAuthenticate.vue'
+import WeatherLoading from '../loading/WeatherLoading.vue'
 
 const weatherStore = useWeatherStore()
 const { currentWeather, hourlyForecast, loading, error } = storeToRefs(weatherStore)
@@ -26,8 +27,8 @@ const onCitySearch = async (cityName: string) => {
 
 onMounted(async () => {
   if (weatherStore.city) {
-    await weatherStore.fetchCurrentWeather()
-    await weatherStore.fetchHourlyForecast()
+    // await weatherStore.fetchCurrentWeather()
+    // await weatherStore.fetchHourlyForecast()
   }
 })
 
@@ -51,8 +52,9 @@ const onModalClose = () => {
     <h1 class="section__title h1 visually-hidden">Погода в текущий момент</h1>
     <div class="weather__body">
       <CitySearch @search="onCitySearch" />
+      <WeatherLoading v-if="loading" />
       <WeatherCard
-        v-if="currentWeather"
+        v-if="currentWeather && !loading"
         class="weather__card"
         :city="currentWeather.city"
         :temperature="currentWeather.temperature"
@@ -63,7 +65,10 @@ const onModalClose = () => {
         :icon="currentWeather.icon"
       />
       <h2 class="section__title h2 visually-hidden">Почасовой прогноз</h2>
-      <WeatherHourly :forecast="hourlyForecast" />
+      <WeatherHourly
+        v-if="hourlyForecast.length > 0 && !loading"
+        :forecast="hourlyForecast"
+      />
     </div>
   </section>
   <Overlay

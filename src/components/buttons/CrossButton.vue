@@ -1,7 +1,11 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineProps<{
+  color?: string
+}>()
+</script>
 
 <template>
-  <button class="cross-button">
+  <button :class="`cross-button ${color === 'light' ? 'cross-button--light' : ''}`">
     <span class="visually-hidden">Закрыть меню навигации</span>
   </button>
 </template>
@@ -19,6 +23,10 @@
     opacity: 0.7;
   }
 
+  &--light {
+    color: var(--color-light);
+  }
+
   &::before,
   &::after {
     content: '';
@@ -27,7 +35,7 @@
     left: rem(7);
     width: 70%;
     height: rem(2);
-    background-color: var(--color-dark);
+    background-color: currentColor;
     border-radius: rem(5);
   }
 
