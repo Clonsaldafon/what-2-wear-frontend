@@ -28,8 +28,6 @@ const props = defineProps<{
 .weather-hourly {
   display: inline-flex;
   padding: rem(20);
-  width: 100%;
-  max-width: rem(500);
   background-color: var(--color-light-alt);
   border: rem(1) solid var(--color-gray);
   border-radius: rem(30);
@@ -40,6 +38,12 @@ const props = defineProps<{
     display: flex;
     align-items: center;
     column-gap: rem(20);
+  }
+
+  @include tablet-l {
+    width: 100%;
+    max-width: rem(500);
+    scrollbar-width: auto;
   }
 }
 </style>

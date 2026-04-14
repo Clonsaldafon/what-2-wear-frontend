@@ -8,12 +8,21 @@ const props = defineProps<{
   humidity: number
   windSpeed: number
   description: string
+  hasPrecipitation: boolean
+  precipitationType: string
+  isDayTime: boolean
   icon: string
 }>()
+
+const backgroundModifier = 
+  props.precipitationType === 'rain' ? 'rain' : 
+  props.precipitationType === 'snow' ? 'snow' : 
+  props.precipitationType === 'ice' ? 'ice' : 
+  props.precipitationType === 'mix' ? 'mix' : 'sunny'
 </script>
 
 <template>
-  <article class="weather-card">
+  <article :class="`weather-card weather-card--${backgroundModifier} ${!isDayTime ? 'weather-card--night' : ''}`">
     <div class="weather-card__body">
       <div class="weather-card__info">
         <div class="weather-card__info-city">{{ city }}</div>
@@ -55,16 +64,42 @@ const props = defineProps<{
   padding: rem(30);
   line-height: 0.75;
   color: var(--color-dark);
-  background-color: var(--color-light-alt);
   border-radius: rem(30);
   box-shadow: 0 rem(4) rem(20) 0 rgba(0, 0, 0, 0.25);
+
+  &--sunny {
+    color: var(--color-light);
+    background: var(--color-sunny-background);
+  }
+
+  &--rain {
+    color: var(--color-light);
+    background: var(--color-rain-background);
+  }
+
+  &--snow {
+    background: var(--color-snow-background);
+  }
+
+  &--ice {
+    background: var(--color-ice-background);
+  }
+
+  &--mix {
+    background: var(--color-mix-background);
+  }
+
+  &--night {
+    color: var(--color-light);
+    background: var(--color-night-background);
+  }
 
   &__body {
     display: flex;
     align-items: center;
     justify-content: space-between;
     column-gap: rem(10);
-    border-bottom: rem(1) solid var(--color-gray);
+    border-bottom: rem(1) solid rgba($color: #FFFFFF, $alpha: 0.25);
 
     &:not(:last-child) {
       padding-bottom: rem(20);
@@ -98,6 +133,9 @@ const props = defineProps<{
 
   &__icon {
     @include flex-center;
+
+    filter: drop-shadow(0 rem(2) rem(5) rgba(0, 0, 0, 0.25));
+    -webkit-filter: drop-shadow(0 rem(2) rem(5) rgba(0, 0, 0, 0.25));
   }
 
   &__footer {

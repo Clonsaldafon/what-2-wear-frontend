@@ -27,8 +27,8 @@ const onCitySearch = async (cityName: string) => {
 
 onMounted(async () => {
   if (weatherStore.city) {
-    // await weatherStore.fetchCurrentWeather()
-    // await weatherStore.fetchHourlyForecast()
+    await weatherStore.fetchCurrentWeather()
+    await weatherStore.fetchHourlyForecast()
   }
 })
 
@@ -62,6 +62,9 @@ const onModalClose = () => {
         :humidity="currentWeather.humidity"
         :windSpeed="currentWeather.wind_speed"
         :description="currentWeather.description"
+        :hasPrecipitation="currentWeather.has_precipitation"
+        :precipitationType="currentWeather.precipitation_type"
+        :isDayTime="currentWeather.is_day_time"
         :icon="currentWeather.icon"
       />
       <h2 class="section__title h2 visually-hidden">Почасовой прогноз</h2>
@@ -92,7 +95,7 @@ const onModalClose = () => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    row-gap: rem(40)
+    row-gap: rem(40);
   }
 
   &__current-icon {

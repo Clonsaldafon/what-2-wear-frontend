@@ -18,6 +18,9 @@ interface CurrentWeather {
   humidity: number
   wind_speed: number
   description: string
+  has_precipitation: boolean
+  precipitation_type: string
+  is_day_time: boolean
   icon: string
 }
 
@@ -107,7 +110,18 @@ export const useWeatherStore = defineStore('weather', () => {
         params: { city: city.value }
       })
 
-      currentWeather.value = data
+      currentWeather.value = {
+        city: data.city,
+        temperature: data.temperature,
+        feels_like: data.feels_like,
+        humidity: data.humidity,
+        wind_speed: data.wind_speed,
+        description: data.description,
+        icon: String(data.icon),
+        precipitation_type: data.precipitation_type || 'sunny',
+        has_precipitation: data.has_precipitation ?? false,
+        is_day_time: data.is_day_time
+      }
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;
       error.value = axiosError.response?.data?.message || 'Ошибка при загрузке прогноза погоды';

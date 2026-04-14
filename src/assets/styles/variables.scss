@@ -16,6 +16,13 @@
 
   --color-rain: #5C8BB5;
 
+  --color-sunny-background: linear-gradient(150deg, #F5A345, #F0CE0A);
+  --color-rain-background: linear-gradient(150deg, #4577F5, #519DDB);
+  --color-snow-background: linear-gradient(150deg, #97CBEB, #C4E5F9);
+  --color-ice-background: linear-gradient(150deg, #84CDFB, #ACDFFF);
+  --color-mix-background: var(--color-light-alt);
+  --color-night-background: #505050;
+
   --font-family: 'Manrope', system-ui, sans-serif;
 
   --container-width: #{rem(1280)};
