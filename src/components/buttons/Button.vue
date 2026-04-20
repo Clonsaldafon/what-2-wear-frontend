@@ -1,20 +1,23 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    type?: string
+    type?: 'button' | 'submit' | 'reset'
     hasIcon?: boolean
+    disabled?: boolean
   }>(), {
     type: 'button',
-    hasIcon: false
+    hasIcon: false,
+    disabled: false
   }
 )
 </script>
 
 <template>
   <button
-    v-if="type === 'button'"
     class="button"
-    type="button"
+    :class="{ 'button--disabled': disabled }"
+    :type="type"
+    :disabled="disabled"
   >
     <div v-if="hasIcon" class="button__icon">
       <slot name="icon"></slot>
@@ -41,6 +44,11 @@ const props = withDefaults(
   @include hover {
     color: var(--color-dark);
     background-color: transparent;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   &__icon {

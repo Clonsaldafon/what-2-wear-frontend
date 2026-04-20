@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import router from '@/router'
 
@@ -15,10 +15,10 @@ import { useAuthStore } from '@/stores/auth'
 import { ROUTES } from '@/utils/constants'
 
 const authStore = useAuthStore()
-const isAuthenticated = authStore.isAuthenticated
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isMenuOpen = ref(false)
 const isTelegram = ref(false)
-const messenger = authStore.messenger
+const messenger = computed(() => authStore.messenger)
 
 const initDataRaw = ref<string | undefined>(undefined);
 const initDataParsed = ref<any>(null);
@@ -62,7 +62,7 @@ onMounted(async () => {
   }
 })
 
-const emit = defineEmits(['clothesMessageOpen'])
+const emit = defineEmits(['clothesMessageOpen', 'authOpen'])
 
 const openMenu = () => {
   isMenuOpen.value = true
@@ -75,6 +75,10 @@ const closeMenu = () => {
 const onLogout = () => {
   authStore.logout()
   router.push(ROUTES.WEATHER)
+}
+
+const onAuthOpen = () => {
+  emit('authOpen', 'login')
 }
 </script>
 
@@ -91,6 +95,7 @@ const onLogout = () => {
         v-if="!isAuthenticated && !messenger"
         class="hidden-tablet"
         :hasIcon="true"
+        @click="onAuthOpen"
       >
         <template #icon>
           <svg
@@ -136,6 +141,7 @@ const onLogout = () => {
     :onClose="closeMenu"
     :onLogout="onLogout"
     @clothesMessageOpen="emit('clothesMessageOpen')"
+    @authOpen="emit('authOpen', $event)"
   />
 </template>
 

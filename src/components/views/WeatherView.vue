@@ -11,12 +11,15 @@ import { storeToRefs } from 'pinia'
 import Overlay from '../Overlay.vue'
 import ClothesMessageAuthenticate from '../clothes/ClothesMessageAuthenticate.vue'
 import WeatherLoading from '../loading/WeatherLoading.vue'
+import LoginModal from '../auth/LoginModal.vue'
+import RegisterModal from '../auth/RegisterModal.vue'
 
 const weatherStore = useWeatherStore()
 const { currentWeather, hourlyForecast, loading, error } = storeToRefs(weatherStore)
 
-const isModalOpen = ref(false)
-const isClothesMessageOpen = ref(false)
+type ModalView = 'clothes' | 'login' | 'register' | null
+
+const activeModal = ref<ModalView>(null)
 
 const onCitySearch = async (cityName: string) => {
   weatherStore.setCity(cityName)
@@ -33,21 +36,23 @@ onMounted(async () => {
 })
 
 const onClothesMessageOpen = () => {
-  isClothesMessageOpen.value = true
+  activeModal.value = 'clothes'
 }
 
-const onModalOpen = () => {
-  isModalOpen.value = true
+const onAuthOpen = (view: Extract<ModalView, 'login' | 'register'> = 'login') => {
+  activeModal.value = view
 }
 
 const onModalClose = () => {
-  isModalOpen.value = false
-  isClothesMessageOpen.value = false
+  activeModal.value = null
 }
 </script>
 
 <template>
-  <Header @clothesMessageOpen="onClothesMessageOpen" />
+  <Header
+    @clothesMessageOpen="onClothesMessageOpen"
+    @authOpen="onAuthOpen"
+  />
   <section class="weather section container">
     <h1 class="section__title h1 visually-hidden">Погода в текущий момент</h1>
     <div class="weather__body">
@@ -75,14 +80,34 @@ const onModalClose = () => {
     </div>
   </section>
   <Overlay
-    v-if="isModalOpen || isClothesMessageOpen"
+    v-if="activeModal"
     :onClose="onModalClose"
   >
     <template
-      v-if="isClothesMessageOpen"
+      v-if="activeModal === 'clothes'"
       #modal
     >
-      <ClothesMessageAuthenticate />
+      <ClothesMessageAuthenticate @authOpen="onAuthOpen" />
+    </template>
+    <template
+      v-else-if="activeModal === 'login'"
+      #modal
+    >
+      <LoginModal
+        @close="onModalClose"
+        @switch="onAuthOpen('register')"
+        @success="onModalClose"
+      />
+    </template>
+    <template
+      v-else-if="activeModal === 'register'"
+      #modal
+    >
+      <RegisterModal
+        @close="onModalClose"
+        @switch="onAuthOpen('login')"
+        @success="onModalClose"
+      />
     </template>
   </Overlay>
 </template>

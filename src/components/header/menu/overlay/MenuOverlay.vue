@@ -12,10 +12,15 @@ const props = defineProps<{
   onLogout: () => void
 }>()
 
-const emit = defineEmits(['clothesMessageOpen'])
+const emit = defineEmits(['clothesMessageOpen', 'authOpen'])
 
 const onClothesMessageOpen = () => {
   emit('clothesMessageOpen')
+  props.onClose()
+}
+
+const onAuthOpen = () => {
+  emit('authOpen', 'login')
   props.onClose()
 }
 </script>
@@ -96,6 +101,7 @@ const onClothesMessageOpen = () => {
           <Button
             v-if="!isAuthenticated && !messenger"
             :hasIcon="true"
+            @click="onAuthOpen"
           >
             <template #icon>
               <svg

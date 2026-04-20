@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import Button from '../buttons/Button.vue';
 
+defineEmits<{
+  authOpen: ['login']
+}>()
 </script>
 
 <template>
@@ -26,7 +29,10 @@ import Button from '../buttons/Button.vue';
         </p>
       </div>
     </div>
-    <Button class="clothes-message-authenticate__button">
+    <Button
+      class="clothes-message-authenticate__button"
+      @click="$emit('authOpen', 'login')"
+    >
       <template #text>Начать</template>
     </Button>
   </div>
