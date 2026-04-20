@@ -14,6 +14,11 @@ const router = createRouter({
       name: `${ROUTES.WEATHER}`,
       component: () => import('@/components/views/WeatherView.vue'),
       meta: { requiresGuest: true }
+    },
+    {
+      path: `/${ROUTES.CLOTHES}`,
+      name: `${ROUTES.CLOTHES}`,
+      component: () => import('@/components/views/ClothesView.vue')
     }
   ]
 })

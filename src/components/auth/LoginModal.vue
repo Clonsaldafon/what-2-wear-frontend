@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue'
 
 import Button from '@/components/buttons/Button.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useErrorStore } from '@/stores/error'
 
 import AuthModalLayout from './AuthModalLayout.vue'
 
@@ -13,6 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const errorStore = useErrorStore()
 
 const form = reactive({
   username: '',
@@ -20,16 +22,15 @@ const form = reactive({
 })
 
 const loading = ref(false)
-const errorMessage = ref('')
 
 const onSubmit = async () => {
   if (!form.username || !form.password) {
-    errorMessage.value = 'Заполните логин и пароль.'
+    errorStore.setError('Ошибка входа', 'Заполните логин и пароль.')
     return
   }
 
   loading.value = true
-  errorMessage.value = ''
+  errorStore.clearError()
 
   const result = await authStore.login({
     username: form.username.trim(),
@@ -39,7 +40,7 @@ const onSubmit = async () => {
   loading.value = false
 
   if (!result.success) {
-    errorMessage.value = result.message || 'Не удалось войти.'
+    errorStore.setError('Ошибка входа', result.message || 'Не удалось войти.')
     return
   }
 
@@ -79,7 +80,6 @@ const onSubmit = async () => {
           placeholder="Введите пароль"
         >
       </label>
-      <p v-if="errorMessage" class="auth-form__error">{{ errorMessage }}</p>
       <Button
         class="auth-form__submit"
         type="submit"
@@ -123,11 +123,6 @@ const onSubmit = async () => {
       background-color: var(--color-light);
     }
   }
-
-  &__error {
-    color: var(--color-error);
-  }
-
   &__submit {
     width: 100%;
     margin-top: rem(4);

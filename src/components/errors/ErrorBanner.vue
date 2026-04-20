@@ -24,7 +24,7 @@ const handleClose = () => {
         <CrossButton
           class="error-banner__close-button"
           :color="'light'"
-          :onClose="handleClose"
+          @click="handleClose"
         />
       </header>
       <p class="error-banner__message">{{ message }}</p>
@@ -38,6 +38,7 @@ const handleClose = () => {
 
 .error-banner {
   position: fixed;
+  top: 0;
   right: rem(20);
   left: rem(20);
   margin-inline: auto;

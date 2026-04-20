@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import MenuItem from './MenuItem.vue'
 
@@ -10,6 +10,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['clothesMessageOpen'])
+const route = useRoute()
 
 const onClothesMessageOpen = () => {
   emit('clothesMessageOpen')
@@ -23,14 +24,14 @@ const onClothesMessageOpen = () => {
         <MenuItem
           :route="ROUTES.WEATHER"
           :text="'Погода'"
-          :selected="true"
+          :selected="route.name === ROUTES.WEATHER"
         />
       </li>
       <li class="menu__item">
         <MenuItem
           :route="ROUTES.CLOTHES"
           :text="'Одежда'"
-          :selected="false"
+          :selected="route.name === ROUTES.CLOTHES"
           @clothes="onClothesMessageOpen"
         />
       </li>

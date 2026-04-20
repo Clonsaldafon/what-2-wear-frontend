@@ -74,7 +74,7 @@ const closeMenu = () => {
 
 const onLogout = () => {
   authStore.logout()
-  router.push(ROUTES.WEATHER)
+  router.push({ name: ROUTES.WEATHER })
 }
 
 const onAuthOpen = () => {

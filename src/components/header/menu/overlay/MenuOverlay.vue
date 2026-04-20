@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
+
 import CrossButton from '@/components/buttons/CrossButton.vue'
 import Button from '@/components/buttons/Button.vue'
 import MenuOverlayItem from './MenuOverlayItem.vue';
@@ -13,6 +15,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['clothesMessageOpen', 'authOpen'])
+const route = useRoute()
 
 const onClothesMessageOpen = () => {
   emit('clothesMessageOpen')
@@ -39,7 +42,7 @@ const onAuthOpen = () => {
           <MenuOverlayItem
             :route="ROUTES.WEATHER"
             :text="'Погода'"
-            :selected="true"
+            :selected="route.name === ROUTES.WEATHER"
           >
             <template #icon>
               <svg
@@ -60,7 +63,7 @@ const onAuthOpen = () => {
           <MenuOverlayItem
             :route="ROUTES.CLOTHES"
             :text="'Одежда'"
-            :selected="false"
+            :selected="route.name === ROUTES.CLOTHES"
             @clothes="onClothesMessageOpen"
           >
             <template #icon>

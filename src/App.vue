@@ -15,14 +15,14 @@ const errorStore = useErrorStore();
   />
 
   <template v-else>
+    <RouterView />
+
     <ErrorBanner
       v-if="errorStore.hasError"
       :title="errorStore.errorTitle"
       :message="errorStore.errorMessage"
       @close="errorStore.clearError"
     />
-    
-    <RouterView v-else />
   </template>
 </template>
 

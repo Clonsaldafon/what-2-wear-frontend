@@ -4,6 +4,7 @@ import router from '@/router'
 
 import { useAuthStore } from '@/stores/auth'
 import { useErrorStore } from '@/stores/error'
+import { ROUTES } from '@/utils/constants'
 
 const apiClient = axios.create({
   baseURL: (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api'),
@@ -55,7 +56,7 @@ apiClient.interceptors.response.use(
 
         authStore.logout()
 
-        router.push('/weather')
+        router.push({ name: ROUTES.WEATHER })
 
         return Promise.reject(refreshError)
       }
