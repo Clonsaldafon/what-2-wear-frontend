@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import WeatherIcon from './WeatherIcon.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   city: string
   temperature: number
   feelsLike: number
@@ -12,7 +12,10 @@ const props = defineProps<{
   precipitationType: string
   isDayTime: boolean
   icon: string
-}>()
+  showFooter?: boolean
+}>(), {
+  showFooter: true
+})
 
 const backgroundModifier = 
   props.precipitationType === 'rain' ? 'rain' : 
@@ -23,7 +26,7 @@ const backgroundModifier =
 
 <template>
   <article :class="`weather-card weather-card--${backgroundModifier} ${!isDayTime ? 'weather-card--night' : ''}`">
-    <div class="weather-card__body">
+    <div :class="['weather-card__body', { 'weather-card__body--compact': !showFooter }]">
       <div class="weather-card__info">
         <div class="weather-card__info-city">{{ city }}</div>
         <div class="weather-card__info-temperature">
@@ -37,7 +40,10 @@ const backgroundModifier =
         />
       </div>
     </div>
-    <footer class="weather-card__footer">
+    <footer
+      v-if="showFooter"
+      class="weather-card__footer"
+    >
       <div class="weather-card__footer-item">
         <div class="weather-card__footer-item-title">Ощущается</div>
         <div class="weather-card__footer-item-value">{{ feelsLike }}°</div>
@@ -60,8 +66,10 @@ const backgroundModifier =
 .weather-card {
   display: inline-flex;
   flex-direction: column;
+  align-self: center;
   row-gap: rem(20);
   padding: rem(30);
+  max-width: rem(450);
   line-height: 0.75;
   color: var(--color-dark);
   border-radius: rem(30);
@@ -103,6 +111,14 @@ const backgroundModifier =
 
     &:not(:last-child) {
       padding-bottom: rem(20);
+    }
+
+    &--compact {
+      border-bottom: 0;
+
+      &:not(:last-child) {
+        padding-bottom: 0;
+      }
     }
   }
 
