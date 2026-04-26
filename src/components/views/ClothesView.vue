@@ -23,13 +23,23 @@ const heroWindSpeed = computed(() => {
   return Math.round(currentWeather.value.wind_speed)
 })
 const precipitationProbability = computed(() => {
-  if (!hourlyForecast.value.length) return null
+  const currentProbability = currentWeather.value?.precipitation_probability
+  const hourlyProbability = hourlyForecast.value.length
+    ? Math.max(
+        ...hourlyForecast.value.map((item) => item.precipitation_probability ?? 0)
+      )
+    : null
 
-  return Math.max(
-    ...hourlyForecast.value.map((item) => item.precipitation_probability ?? 0)
-  )
+  return hourlyProbability ?? currentProbability ?? null
 })
 const recommendation = computed(() => currentWeather.value?.recommendation ?? null)
+const needsUmbrella = computed(() => {
+  const accessories = recommendation.value?.accessories ?? []
+
+  return accessories.includes('umbrella')
+    || Boolean(currentWeather.value?.has_precipitation && currentWeather.value?.precipitation_type === 'rain')
+    || (precipitationProbability.value ?? 0) >= 70
+})
 
 const signalItems = computed<SignalItem[]>(() => {
   if (!hasSelectedCity.value) {
@@ -114,11 +124,17 @@ const recommendationItems = computed(() => {
     ]
   }
 
-  return recommendation.value?.items || [
+  const items = recommendation.value?.items || [
     `Прогноз для ${heroCity.value} уже загружен`,
     `Сейчас на улице ${currentWeather.value.temperature}°C, ощущается как ${currentWeather.value.feels_like}°C`,
     'Рекомендация по одежде не пришла от сервера'
   ]
+
+  if (!needsUmbrella.value || items.some((item) => item.toLowerCase().includes('зонт'))) {
+    return items
+  }
+
+  return [...items, 'Защита от осадков: возьмите зонт']
 })
 
 const recommendationNote = computed(() => {
@@ -138,8 +154,13 @@ const recommendationNote = computed(() => {
 })
 
 const recommendationNotes = computed(() => {
-  if (!recommendation.value) return []
-  return recommendation.value.notes.filter(Boolean)
+  const notes = recommendation.value?.notes.filter(Boolean) ?? []
+
+  if (!needsUmbrella.value || notes.some((note) => note.toLowerCase().includes('зонт'))) {
+    return notes
+  }
+
+  return [...notes, 'Вероятность осадков высокая, поэтому зонт лучше держать под рукой.']
 })
 
 onMounted(async () => {
