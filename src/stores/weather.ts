@@ -11,8 +11,18 @@ interface CitySuggestion {
   full_name: string
 }
 
-interface CurrentWeather {
+interface ClothingRecommendation {
+  title: string
+  summary: string
+  items: string[]
+  accessories: string[]
+  notes: string[]
+  outfit: Record<string, string>
+}
+
+export interface CurrentWeather {
   city: string
+  request_id?: number
   temperature: number
   feels_like: number
   humidity: number
@@ -22,6 +32,8 @@ interface CurrentWeather {
   precipitation_type: string
   is_day_time: boolean
   icon: string
+  recommendation_source?: string
+  recommendation?: ClothingRecommendation
 }
 
 export interface HourlyForecast {
@@ -120,7 +132,10 @@ export const useWeatherStore = defineStore('weather', () => {
         icon: String(data.icon),
         precipitation_type: data.precipitation_type || 'sunny',
         has_precipitation: data.has_precipitation ?? false,
-        is_day_time: data.is_day_time
+        is_day_time: data.is_day_time,
+        request_id: data.request_id,
+        recommendation_source: data.recommendation_source,
+        recommendation: data.recommendation
       }
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;

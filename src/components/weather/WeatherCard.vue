@@ -48,7 +48,7 @@ const backgroundModifier =
       </div>
       <div class="weather-card__footer-item">
         <div class="weather-card__footer-item-title">Ветер</div>
-        <div class="weather-card__footer-item-value">{{ Math.round(windSpeed * 1000 / 3600) }} м/с</div>
+        <div class="weather-card__footer-item-value">{{ Math.round(windSpeed) }} м/с</div>
       </div>
     </footer>
   </article>

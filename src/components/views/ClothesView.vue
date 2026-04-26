@@ -20,7 +20,12 @@ const hasSelectedCity = computed(() => !!city.value.trim())
 const heroCity = computed(() => currentWeather.value?.city || city.value || '')
 const heroWindSpeed = computed(() => {
   if (currentWeather.value?.wind_speed == null) return null
-  return Math.round(currentWeather.value.wind_speed * 1000 / 3600)
+  return Math.round(currentWeather.value.wind_speed)
+})
+const recommendation = computed(() => currentWeather.value?.recommendation ?? null)
+const recommendationSource = computed(() => {
+  if (!currentWeather.value?.recommendation_source) return ''
+  return currentWeather.value.recommendation_source === 'ml' ? 'ML' : 'Правила'
 })
 
 const signalItems = computed<SignalItem[]>(() => {
@@ -85,7 +90,7 @@ const recommendationTitle = computed(() => {
     return 'Ожидаем погодные данные'
   }
 
-  return 'Рекомендации скоро появятся'
+  return recommendation.value?.title || 'Рекомендация недоступна'
 })
 
 const recommendationItems = computed(() => {
@@ -115,10 +120,10 @@ const recommendationItems = computed(() => {
     ]
   }
 
-  return [
+  return recommendation.value?.items || [
     `Прогноз для ${heroCity.value} уже загружен`,
     `Сейчас на улице ${currentWeather.value.temperature}°C, ощущается как ${currentWeather.value.feels_like}°C`,
-    'Как только модуль подбора одежды будет подключен, здесь появятся персональные рекомендации'
+    'Рекомендация по одежде не пришла от сервера'
   ]
 })
 
@@ -135,7 +140,12 @@ const recommendationNote = computed(() => {
     return 'Город уже выбран. Осталось дождаться загрузки прогноза погоды, и рекомендации появятся автоматически.'
   }
 
-  return 'Погода уже подгружена. Следующий шаг — подключить источник реальных рекомендаций, и этот экран начнет показывать подбор одежды вместо информационного состояния.'
+  return recommendation.value?.summary || 'Погода уже подгружена, но сервер не вернул рекомендацию по одежде.'
+})
+
+const recommendationNotes = computed(() => {
+  if (!recommendation.value) return []
+  return recommendation.value.notes.filter(Boolean)
 })
 
 onMounted(async () => {
@@ -180,7 +190,9 @@ onMounted(async () => {
       <div class="clothes__recommendation">
         <div class="clothes__card">
           <div class="clothes__card-head">
-            <span class="clothes__card-kicker">Рекомендация</span>
+            <span class="clothes__card-kicker">
+              Рекомендация<span v-if="recommendationSource"> · {{ recommendationSource }}</span>
+            </span>
             <h2 class="clothes__card-title h3">{{ recommendationTitle }}</h2>
           </div>
 
@@ -202,6 +214,19 @@ onMounted(async () => {
           <div class="clothes__note">
             {{ recommendationNote }}
           </div>
+
+          <ul
+            v-if="recommendationNotes.length"
+            class="clothes__notes"
+          >
+            <li
+              v-for="note in recommendationNotes"
+              :key="note"
+              class="clothes__notes-item"
+            >
+              {{ note }}
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -348,6 +373,15 @@ onMounted(async () => {
     color: var(--color-dark-alt);
     background-color: var(--color-gray-alt);
     border-radius: rem(18);
+  }
+
+  &__notes {
+    display: flex;
+    flex-direction: column;
+    row-gap: rem(8);
+    padding-left: rem(20);
+    color: var(--color-dark-alt);
+    line-height: 1.45;
   }
 
   @include tablet-l {
