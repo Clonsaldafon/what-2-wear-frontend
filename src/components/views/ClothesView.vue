@@ -14,7 +14,7 @@ type SignalItem = {
 }
 
 const weatherStore = useWeatherStore()
-const { city, currentWeather, loading } = storeToRefs(weatherStore)
+const { city, currentWeather, hourlyForecast, loading } = storeToRefs(weatherStore)
 
 const hasSelectedCity = computed(() => !!city.value.trim())
 const heroCity = computed(() => currentWeather.value?.city || city.value || '')
@@ -22,11 +22,14 @@ const heroWindSpeed = computed(() => {
   if (currentWeather.value?.wind_speed == null) return null
   return Math.round(currentWeather.value.wind_speed)
 })
-const recommendation = computed(() => currentWeather.value?.recommendation ?? null)
-const recommendationSource = computed(() => {
-  if (!currentWeather.value?.recommendation_source) return ''
-  return currentWeather.value.recommendation_source === 'ml' ? 'ML' : 'Правила'
+const precipitationProbability = computed(() => {
+  if (!hourlyForecast.value.length) return null
+
+  return Math.max(
+    ...hourlyForecast.value.map((item) => item.precipitation_probability ?? 0)
+  )
 })
+const recommendation = computed(() => currentWeather.value?.recommendation ?? null)
 
 const signalItems = computed<SignalItem[]>(() => {
   if (!hasSelectedCity.value) {
@@ -49,7 +52,10 @@ const signalItems = computed<SignalItem[]>(() => {
     { label: 'Температура', value: `${currentWeather.value.temperature}°C` },
     { label: 'Ощущается', value: `${currentWeather.value.feels_like}°C` },
     { label: 'Влажность', value: `${currentWeather.value.humidity}%` },
-    { label: 'Ветер', value: `${heroWindSpeed.value} м/с` }
+    { label: 'Ветер', value: `${heroWindSpeed.value} м/с` },
+    ...(precipitationProbability.value === null
+      ? []
+      : [{ label: 'Осадки', value: `${precipitationProbability.value}%` }])
   ]
 })
 
@@ -62,19 +68,7 @@ const wardrobeDirection = computed(() => {
     return `Для ${city.value} еще не загружен прогноз. Как только данные о погоде появятся, мы покажем рекомендации с учетом температуры, ветра и осадков.`
   }
 
-  if (currentWeather.value.has_precipitation) {
-    return 'Лучше выбрать практичный верхний слой, закрытую обувь и вещи, которые спокойно переживут влажный воздух и переменчивую улицу.'
-  }
-
-  if (currentWeather.value.temperature <= 10) {
-    return 'Ставка на многослойность: база, утепляющий средний слой и уверенный верх, который держит форму и защищает от прохлады.'
-  }
-
-  if (currentWeather.value.temperature >= 22) {
-    return 'Держите образ легким и дышащим: свободная база, минимум лишних слоев и обувь, в которой комфортно весь день.'
-  }
-
-  return 'Идеальный сценарий на день это аккуратный многослойный образ: дышащая база, выразительный верхний слой и закрытая обувь.'
+  return recommendation.value?.summary || 'Подбор составлен по текущей температуре, ощущению на улице, ветру и осадкам.'
 })
 
 const recommendationTitle = computed(() => {
@@ -90,7 +84,7 @@ const recommendationTitle = computed(() => {
     return 'Ожидаем погодные данные'
   }
 
-  return recommendation.value?.title || 'Рекомендация недоступна'
+  return recommendation.value ? 'Подходящий комплект' : 'Рекомендация недоступна'
 })
 
 const recommendationItems = computed(() => {
@@ -140,7 +134,7 @@ const recommendationNote = computed(() => {
     return 'Город уже выбран. Осталось дождаться загрузки прогноза погоды, и рекомендации появятся автоматически.'
   }
 
-  return recommendation.value?.summary || 'Погода уже подгружена, но сервер не вернул рекомендацию по одежде.'
+  return ''
 })
 
 const recommendationNotes = computed(() => {
@@ -151,6 +145,10 @@ const recommendationNotes = computed(() => {
 onMounted(async () => {
   if (weatherStore.city && !currentWeather.value && !loading.value) {
     await weatherStore.fetchCurrentWeather()
+  }
+
+  if (weatherStore.city && !hourlyForecast.value.length && !loading.value) {
+    await weatherStore.fetchHourlyForecast()
   }
 })
 
@@ -190,9 +188,6 @@ onMounted(async () => {
       <div class="clothes__recommendation">
         <div class="clothes__card">
           <div class="clothes__card-head">
-            <span class="clothes__card-kicker">
-              Рекомендация<span v-if="recommendationSource"> · {{ recommendationSource }}</span>
-            </span>
             <h2 class="clothes__card-title h3">{{ recommendationTitle }}</h2>
           </div>
 
@@ -211,7 +206,10 @@ onMounted(async () => {
             </li>
           </ul>
 
-          <div class="clothes__note">
+          <div
+            v-if="recommendationNote"
+            class="clothes__note"
+          >
             {{ recommendationNote }}
           </div>
 

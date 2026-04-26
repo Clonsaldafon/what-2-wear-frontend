@@ -20,6 +20,17 @@ interface ClothingRecommendation {
   outfit: Record<string, string>
 }
 
+const formatDisplayCity = (value: string) => {
+  const parts = value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  if (parts.length < 2) return value
+
+  return `${parts[0]}, ${parts[parts.length - 1]}`
+}
+
 export interface CurrentWeather {
   city: string
   request_id?: number
@@ -123,7 +134,7 @@ export const useWeatherStore = defineStore('weather', () => {
       })
 
       currentWeather.value = {
-        city: data.city,
+        city: formatDisplayCity(data.city),
         temperature: data.temperature,
         feels_like: data.feels_like,
         humidity: data.humidity,
