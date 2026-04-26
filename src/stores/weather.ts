@@ -40,6 +40,7 @@ export interface CurrentWeather {
   wind_speed: number
   description: string
   has_precipitation: boolean
+  precipitation_probability?: number
   precipitation_type: string
   is_day_time: boolean
   icon: string
@@ -142,6 +143,7 @@ export const useWeatherStore = defineStore('weather', () => {
         description: data.description,
         icon: String(data.icon),
         precipitation_type: data.precipitation_type || 'sunny',
+        precipitation_probability: data.precipitation_probability ?? 0,
         has_precipitation: data.has_precipitation ?? false,
         is_day_time: data.is_day_time,
         request_id: data.request_id,

@@ -51,11 +51,12 @@ const signalItems = computed<SignalItem[]>(() => {
   return [
     { label: 'Температура', value: `${currentWeather.value.temperature}°C` },
     { label: 'Ощущается', value: `${currentWeather.value.feels_like}°C` },
-    { label: 'Влажность', value: `${currentWeather.value.humidity}%` },
-    { label: 'Ветер', value: `${heroWindSpeed.value} м/с` },
     ...(precipitationProbability.value === null
       ? []
       : [{ label: 'Осадки', value: `${precipitationProbability.value}%` }])
+    ,
+    { label: 'Ветер', value: `${heroWindSpeed.value} м/с` },
+    { label: 'Влажность', value: `${currentWeather.value.humidity}%` },
   ]
 })
 
@@ -386,14 +387,40 @@ onMounted(async () => {
     &__hero {
       grid-template-columns: 1fr;
     }
+
+    &__copy {
+      display: contents;
+    }
+
+    &__eyebrow {
+      order: 1;
+    }
+
+    &__title {
+      order: 2;
+    }
+
+    &__description {
+      display: none;
+    }
+
+    &__recommendation {
+      order: 3;
+    }
+
+    &__signals {
+      order: 4;
+    }
   }
 
-  @include mobile-l {
+  @include tablet {
     &__hero {
       padding: rem(22);
       border-radius: rem(28);
     }
+  }
 
+  @include mobile {
     &__signals {
       grid-template-columns: 1fr;
     }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import CitySearch from '../CitySearch.vue'
 import Header from '../header/Header.vue'
@@ -20,6 +20,51 @@ const { currentWeather, hourlyForecast, loading, error } = storeToRefs(weatherSt
 type ModalView = 'clothes' | 'login' | 'register' | null
 
 const activeModal = ref<ModalView>(null)
+
+const precipitationProbability = computed(() => {
+  const hourlyProbability = hourlyForecast.value.length
+    ? Math.max(...hourlyForecast.value.map((item) => item.precipitation_probability ?? 0))
+    : null
+
+  return hourlyProbability ?? currentWeather.value?.precipitation_probability ?? null
+})
+
+const precipitationLabel = computed(() => {
+  if (!currentWeather.value) return 'Нет данных'
+
+  if (currentWeather.value.precipitation_type === 'rain') return 'Дождь'
+  if (currentWeather.value.precipitation_type === 'snow') return 'Снег'
+  if (currentWeather.value.precipitation_type === 'sleet') return 'Мокрый снег'
+
+  return currentWeather.value.has_precipitation ? 'Возможны осадки' : 'Без осадков'
+})
+
+const weatherDetails = computed(() => {
+  if (!currentWeather.value) return []
+
+  return [
+    {
+      label: 'Осадки',
+      value: precipitationProbability.value === null ? 'Нет данных' : `${precipitationProbability.value}%`,
+      caption: precipitationLabel.value
+    },
+    {
+      label: 'Состояние',
+      value: currentWeather.value.description,
+      caption: currentWeather.value.is_day_time ? 'Сейчас день' : 'Сейчас ночь'
+    },
+    {
+      label: 'Ощущается',
+      value: `${currentWeather.value.feels_like}°C`,
+      caption: currentWeather.value.feels_like < currentWeather.value.temperature ? 'Холоднее фактической' : 'Близко к фактической'
+    },
+    {
+      label: 'Ветер',
+      value: `${Math.round(currentWeather.value.wind_speed)} м/с`,
+      caption: currentWeather.value.wind_speed >= 10 ? 'Сильный ветер' : 'Умеренно'
+    }
+  ]
+})
 
 const onCitySearch = async (cityName: string) => {
   weatherStore.setCity(cityName)
@@ -58,20 +103,37 @@ const onModalClose = () => {
     <div class="weather__body">
       <CitySearch @search="onCitySearch" />
       <WeatherLoading v-if="loading" />
-      <WeatherCard
+      <div
         v-if="currentWeather && !loading"
-        class="weather__card"
-        :city="currentWeather.city"
-        :temperature="currentWeather.temperature"
-        :feelsLike="currentWeather.feels_like"
-        :humidity="currentWeather.humidity"
-        :windSpeed="currentWeather.wind_speed"
-        :description="currentWeather.description"
-        :hasPrecipitation="currentWeather.has_precipitation"
-        :precipitationType="currentWeather.precipitation_type"
-        :isDayTime="currentWeather.is_day_time"
-        :icon="currentWeather.icon"
-      />
+        class="weather__current"
+      >
+        <WeatherCard
+          class="weather__card"
+          :city="currentWeather.city"
+          :temperature="currentWeather.temperature"
+          :feelsLike="currentWeather.feels_like"
+          :humidity="currentWeather.humidity"
+          :windSpeed="currentWeather.wind_speed"
+          :description="currentWeather.description"
+          :hasPrecipitation="currentWeather.has_precipitation"
+          :precipitationType="currentWeather.precipitation_type"
+          :isDayTime="currentWeather.is_day_time"
+          :icon="currentWeather.icon"
+          :showFooter="false"
+        />
+
+        <aside class="weather__details">
+          <article
+            v-for="item in weatherDetails"
+            :key="item.label"
+            class="weather-detail-card"
+          >
+            <span class="weather-detail-card__label">{{ item.label }}</span>
+            <strong class="weather-detail-card__value">{{ item.value }}</strong>
+            <span class="weather-detail-card__caption">{{ item.caption }}</span>
+          </article>
+        </aside>
+      </div>
       <h2 class="section__title h2 visually-hidden">Почасовой прогноз</h2>
       <WeatherHourly
         v-if="hourlyForecast.length > 0 && !loading"
@@ -123,8 +185,75 @@ const onModalClose = () => {
     row-gap: rem(40);
   }
 
+  &__current {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: rem(18);
+    width: 100%;
+    max-width: rem(900);
+  }
+
+  &__card {
+    width: 100%;
+  }
+
+  &__details {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: rem(12);
+  }
+
   &__current-icon {
     @include square(64);
+  }
+
+  @include tablet-l {
+    &__current {
+      max-width: rem(500);
+    }
+
+    &__details {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @include mobile-l {
+    &__details {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.weather-detail-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  row-gap: rem(10);
+  min-height: rem(118);
+  padding: rem(18);
+  background-color: var(--color-light-alt);
+  border: rem(1) solid var(--color-gray);
+  border-radius: rem(24);
+
+  &__label {
+    font-size: rem(13);
+    font-weight: 600;
+    color: var(--color-dark-alt);
+  }
+
+  &__value {
+    @include fluid-text(24, 18);
+
+    line-height: 1.1;
+    font-weight: 700;
+    color: var(--color-dark);
+  }
+
+  &__caption {
+    font-size: rem(13);
+    line-height: 1.25;
+    color: var(--color-dark-alt);
   }
 }
 </style>
