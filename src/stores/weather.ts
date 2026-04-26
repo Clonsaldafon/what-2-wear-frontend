@@ -5,6 +5,15 @@ import { AxiosError } from 'axios';
 
 import apiClient from '@/services/api'
 
+const getApiErrorMessage = (error: unknown, fallbackMessage: string) => {
+  const axiosError = error as AxiosError<{ message?: string; error?: string; detail?: string }>
+
+  return axiosError.response?.data?.message
+    || axiosError.response?.data?.error
+    || axiosError.response?.data?.detail
+    || fallbackMessage
+}
+
 interface CitySuggestion {
   id: number
   name: string
@@ -93,8 +102,7 @@ export const useWeatherStore = defineStore('weather', () => {
     } catch (err) {
       if ((err as Error).name === 'AbortError') return
 
-      const axiosError = err as AxiosError<{ message: string }>;
-      error.value = axiosError.response?.data?.message || 'Ошибка при загрузке городов';
+      error.value = getApiErrorMessage(err, 'Ошибка при загрузке городов');
 
       suggestions.value = []
     } finally {
@@ -111,7 +119,6 @@ export const useWeatherStore = defineStore('weather', () => {
   }
 
   const clearCity = () => {
-    console.trace('Trace clearCity')
     city.value = ''
     localStorage.removeItem('weatherCity')
 
@@ -149,8 +156,7 @@ export const useWeatherStore = defineStore('weather', () => {
         recommendation: data.recommendation
       }
     } catch (err) {
-      const axiosError = err as AxiosError<{ message: string }>;
-      error.value = axiosError.response?.data?.message || 'Ошибка при загрузке прогноза погоды';
+      error.value = getApiErrorMessage(err, 'Ошибка при загрузке прогноза погоды');
 
       throw error
     } finally {
@@ -176,8 +182,7 @@ export const useWeatherStore = defineStore('weather', () => {
         item.icon = item.icon.toString()
       })
     } catch (err) {
-      const axiosError = err as AxiosError<{ message: string }>;
-      error.value = axiosError.response?.data?.message || 'Ошибка при загрузке почасового прогноза';
+      error.value = getApiErrorMessage(err, 'Ошибка при загрузке почасового прогноза');
 
       throw error
     } finally {

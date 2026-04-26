@@ -110,14 +110,21 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshAccessToken = async () => {
     try {
       const response = await apiClient.post('/auth/token/refresh/', { refresh: refreshToken.value })
+      const nextAccessToken = response.data.access_token || response.data.access
+      const nextRefreshToken = response.data.refresh_token || response.data.refresh
 
-      accessToken.value = response.data.access_token
+      accessToken.value = nextAccessToken
 
       if (accessToken.value) {
         localStorage.setItem('accessToken', accessToken.value)
       }
 
-      return response.data.access_token
+      if (nextRefreshToken) {
+        refreshToken.value = nextRefreshToken
+        localStorage.setItem('refreshToken', nextRefreshToken)
+      }
+
+      return nextAccessToken
     } catch (error) {
       logout()
       throw error

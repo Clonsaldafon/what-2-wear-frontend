@@ -40,8 +40,14 @@ apiClient.interceptors.response.use(
       errorStore.setError('Ошибка :(', 'Внутренняя ошибка сервера. Мы уже работаем над этим.', 500, true);
     } else if (error.response?.status === 403) {
       errorStore.setError('Ошибка :(', 'У вас нет доступа к этому ресурсу', 403, false);
-    } else if (error.response?.status === 401 && !originalRequest._retry) {
+    } else if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
       const authStore = useAuthStore()
+
+      if (!authStore.refreshToken) {
+        authStore.logout()
+        router.push({ name: ROUTES.WEATHER })
+        return Promise.reject(error)
+      }
 
       originalRequest._retry = true
       
@@ -61,6 +67,8 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshError)
       }
     }
+
+    return Promise.reject(error)
   }
 )
 
