@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { AxiosError } from 'axios'
 
 import apiClient from '@/services/api'
+import { getReadableApiErrorMessage } from '@/utils/apiErrors'
 
 type AuthResult = {
   success: boolean
@@ -27,18 +28,16 @@ const getAuthErrorMessage = (error: unknown, fallbackMessage: string): AuthResul
       return acc
     }, {})
 
-    const firstError = Object.values(normalizedFieldErrors)[0]?.[0]
-
     return {
       success: false,
-      message: firstError || fallbackMessage,
+      message: getReadableApiErrorMessage(error, fallbackMessage),
       fieldErrors: normalizedFieldErrors
     }
   }
 
   return {
     success: false,
-    message: fallbackMessage
+    message: getReadableApiErrorMessage(error, fallbackMessage)
   }
 }
 

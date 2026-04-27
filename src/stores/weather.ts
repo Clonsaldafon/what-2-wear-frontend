@@ -1,17 +1,13 @@
 import { ref } from 'vue'
 
 import { defineStore } from 'pinia'
-import { AxiosError } from 'axios';
 
 import apiClient from '@/services/api'
+import { useErrorStore } from '@/stores/error'
+import { getReadableApiErrorMessage } from '@/utils/apiErrors'
 
 const getApiErrorMessage = (error: unknown, fallbackMessage: string) => {
-  const axiosError = error as AxiosError<{ message?: string; error?: string; detail?: string }>
-
-  return axiosError.response?.data?.message
-    || axiosError.response?.data?.error
-    || axiosError.response?.data?.detail
-    || fallbackMessage
+  return getReadableApiErrorMessage(error, fallbackMessage)
 }
 
 interface CitySuggestion {
@@ -67,7 +63,15 @@ export interface HourlyForecast {
   icon: string
 }
 
+interface ClothingFeedbackPayload {
+  weather_request_id: number
+  score: number
+  rating?: 'good' | 'too_cold' | 'too_warm' | 'wet' | 'corrected' | 'score'
+  comment?: string
+}
+
 export const useWeatherStore = defineStore('weather', () => {
+  const errorStore = useErrorStore()
   const city = ref(localStorage.getItem('weatherCity') || '')
   const suggestions = ref<CitySuggestion[]>([])
   const currentWeather = ref<CurrentWeather | null>(null)
@@ -104,6 +108,7 @@ export const useWeatherStore = defineStore('weather', () => {
       if ((err as Error).name === 'AbortError') return
 
       error.value = getApiErrorMessage(err, 'Ошибка при загрузке городов');
+      errorStore.setError('Ошибка поиска города', error.value)
 
       suggestions.value = []
     } finally {
@@ -159,6 +164,7 @@ export const useWeatherStore = defineStore('weather', () => {
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Ошибка при загрузке прогноза погоды');
+      errorStore.setError('Ошибка прогноза', error.value)
 
       throw error
     } finally {
@@ -185,10 +191,22 @@ export const useWeatherStore = defineStore('weather', () => {
       })
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Ошибка при загрузке почасового прогноза');
+      errorStore.setError('Ошибка прогноза', error.value)
 
       throw error
     } finally {
       loading.value = false;
+    }
+  }
+
+  const submitClothingFeedback = async (payload: ClothingFeedbackPayload) => {
+    try {
+      await apiClient.post('/weather/clothing-feedback/', payload)
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Ошибка при отправке оценки');
+      errorStore.setError('Ошибка оценки', error.value)
+
+      throw err
     }
   }
 
@@ -204,6 +222,7 @@ export const useWeatherStore = defineStore('weather', () => {
     clearCity,
     clearSuggestions,
     fetchCurrentWeather,
-    fetchHourlyForecast
+    fetchHourlyForecast,
+    submitClothingFeedback
   }
 })

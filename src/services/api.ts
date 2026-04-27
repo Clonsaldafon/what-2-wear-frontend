@@ -4,6 +4,7 @@ import router from '@/router'
 
 import { useAuthStore } from '@/stores/auth'
 import { useErrorStore } from '@/stores/error'
+import { getReadableApiErrorMessage } from '@/utils/apiErrors'
 import { ROUTES } from '@/utils/constants'
 
 const apiClient = axios.create({
@@ -35,11 +36,11 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
     if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.code === 'ERR_CONNECTION_REFUSED') {
-      errorStore.setError('Ошибка :(', 'Нет соединения с сервером. Проверьте подключение к интернету.', undefined, false);
+      errorStore.setError('Ошибка соединения', getReadableApiErrorMessage(error, 'Нет соединения с сервером.'), undefined, false);
     } else if (error.response?.status === 500) {
-      errorStore.setError('Ошибка :(', 'Внутренняя ошибка сервера. Мы уже работаем над этим.', 500, true);
+      errorStore.setError('Ошибка сервера', 'Внутренняя ошибка сервера. Попробуйте позже.', 500, true);
     } else if (error.response?.status === 403) {
-      errorStore.setError('Ошибка :(', 'У вас нет доступа к этому ресурсу', 403, false);
+      errorStore.setError('Нет доступа', 'У вас нет доступа к этому действию.', 403, false);
     } else if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
       const authStore = useAuthStore()
 

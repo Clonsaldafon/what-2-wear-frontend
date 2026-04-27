@@ -5,7 +5,10 @@ defineProps<{
 </script>
 
 <template>
-  <button :class="`cross-button ${color === 'light' ? 'cross-button--light' : ''}`">
+  <button
+    :class="`cross-button ${color === 'light' ? 'cross-button--light' : ''}`"
+    type="button"
+  >
     <span class="visually-hidden">Закрыть меню навигации</span>
   </button>
 </template>
@@ -45,6 +48,10 @@ defineProps<{
 
   &::after {
       rotate: -45deg;
+  }
+
+  @include mobile {
+    @include square(32);
   }
 }
 </style>

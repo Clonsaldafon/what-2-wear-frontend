@@ -4,10 +4,12 @@ const props = withDefaults(
     type?: 'button' | 'submit' | 'reset'
     hasIcon?: boolean
     disabled?: boolean
+    accent?: boolean
   }>(), {
     type: 'button',
     hasIcon: false,
-    disabled: false
+    disabled: false,
+    accent: false
   }
 )
 </script>
@@ -15,7 +17,7 @@ const props = withDefaults(
 <template>
   <button
     class="button"
-    :class="{ 'button--disabled': disabled }"
+    :class="`${accent ? 'button--accent' : ''} ${disabled ? 'button--disabled' : ''}`"
     :type="type"
     :disabled="disabled"
   >
@@ -44,6 +46,11 @@ const props = withDefaults(
   @include hover {
     color: var(--color-dark);
     background-color: transparent;
+  }
+
+  &--accent {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
   }
 
   &:disabled {

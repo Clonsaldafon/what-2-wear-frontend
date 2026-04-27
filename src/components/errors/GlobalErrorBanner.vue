@@ -12,7 +12,7 @@ const reload = () => {
   <div class="global-error-banner">
     <div class="global-error__content">
       <header class="global-error__header">
-        <h3 class="global-error__title h3">😕 Что-то пошло не так</h3>
+        <h3 class="global-error__title h3">Что-то пошло не так</h3>
       </header>
       <p class="global-error__message">{{ message || 'Произошла критическая ошибка' }}</p>
       <button @click="reload" class="global-error__button">Перезагрузить страницу</button>

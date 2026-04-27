@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import { storeToRefs } from 'pinia'
 
 import Header from '../header/Header.vue'
 import ClothesLoading from '../loading/ClothesLoading.vue'
+import ClothesFeedbackModal from '../clothes/ClothesFeedbackModal.vue'
+import Overlay from '../Overlay.vue'
+import Button from '../buttons/Button.vue'
 
 import { useWeatherStore } from '@/stores/weather'
 
@@ -15,6 +18,10 @@ type SignalItem = {
 
 const weatherStore = useWeatherStore()
 const { city, currentWeather, hourlyForecast, loading } = storeToRefs(weatherStore)
+const isFeedbackModalOpen = ref(false)
+const feedbackSubmitting = ref(false)
+const feedbackSubmitted = ref(false)
+const feedbackError = ref<string | null>(null)
 
 const hasSelectedCity = computed(() => !!city.value.trim())
 const heroCity = computed(() => currentWeather.value?.city || city.value || '')
@@ -33,6 +40,11 @@ const precipitationProbability = computed(() => {
   return hourlyProbability ?? currentProbability ?? null
 })
 const recommendation = computed(() => currentWeather.value?.recommendation ?? null)
+const canSendFeedback = computed(() => (
+  currentWeather.value?.recommendation_source === 'ml'
+  && Boolean(currentWeather.value?.request_id)
+  && !feedbackSubmitted.value
+))
 const needsUmbrella = computed(() => {
   const accessories = recommendation.value?.accessories ?? []
 
@@ -164,6 +176,55 @@ const recommendationNotes = computed(() => {
   return [...notes, 'Вероятность осадков высокая, поэтому зонт лучше держать под рукой.']
 })
 
+const onFeedbackOpen = () => {
+  feedbackError.value = null
+  isFeedbackModalOpen.value = true
+}
+
+const onFeedbackClose = () => {
+  if (feedbackSubmitting.value) return
+
+  isFeedbackModalOpen.value = false
+}
+
+type ClothingFeedbackRating = 'good' | 'too_cold' | 'too_warm' | 'wet' | 'corrected' | 'score'
+
+const onFeedbackSubmit = async (payload: {
+  score: number
+  rating?: ClothingFeedbackRating
+  comment?: string
+}) => {
+  if (!currentWeather.value?.request_id) return
+
+  feedbackSubmitting.value = true
+  feedbackError.value = null
+
+  try {
+    await weatherStore.submitClothingFeedback({
+      weather_request_id: currentWeather.value.request_id,
+      score: payload.score,
+      rating: payload.rating,
+      comment: payload.comment
+    })
+
+    feedbackSubmitted.value = true
+    isFeedbackModalOpen.value = false
+  } catch {
+    feedbackError.value = 'Не удалось отправить оценку. Попробуйте еще раз.'
+  } finally {
+    feedbackSubmitting.value = false
+  }
+}
+
+watch(
+  () => currentWeather.value?.request_id,
+  () => {
+    feedbackSubmitted.value = false
+    feedbackError.value = null
+    isFeedbackModalOpen.value = false
+  }
+)
+
 onMounted(async () => {
   if (weatherStore.city && !currentWeather.value && !loading.value) {
     await weatherStore.fetchCurrentWeather()
@@ -181,7 +242,6 @@ onMounted(async () => {
   <section class="clothes section container">
     <div class="clothes__hero">
       <div class="clothes__copy">
-        <span class="clothes__eyebrow">Подбор одежды</span>
         <h1 class="clothes__title h1">
           Что надеть сегодня
           <span
@@ -247,10 +307,43 @@ onMounted(async () => {
               {{ note }}
             </li>
           </ul>
+
+          <div
+            v-if="canSendFeedback || feedbackSubmitted"
+            class="clothes__feedback"
+          >
+            <p
+              v-if="feedbackSubmitted"
+              class="clothes__feedback-thanks"
+            >
+              Спасибо, оценка отправлена.
+            </p>
+            <Button
+              v-else
+              :accent="true"
+              @click="onFeedbackOpen"
+            >
+              <template #text>Оценить</template>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   </section>
+
+  <Overlay
+    v-if="isFeedbackModalOpen"
+    :onClose="onFeedbackClose"
+  >
+    <template #modal>
+      <ClothesFeedbackModal
+        :submitting="feedbackSubmitting"
+        :error="feedbackError"
+        @close="onFeedbackClose"
+        @submit="onFeedbackSubmit"
+      />
+    </template>
+  </Overlay>
 </template>
 
 <style scoped lang="scss">
@@ -290,21 +383,6 @@ onMounted(async () => {
     flex-direction: column;
     justify-content: space-between;
     row-gap: rem(28);
-  }
-
-  &__eyebrow {
-    display: inline-flex;
-    align-self: flex-start;
-    padding: rem(9) rem(14);
-    font-size: rem(13);
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-dark);
-    background-color: rgba(255, 255, 255, 0.75);
-    border: rem(1) solid rgba(44, 44, 44, 0.08);
-    border-radius: rem(999);
-    backdrop-filter: blur(rem(10));
   }
 
   &__title {
@@ -404,6 +482,17 @@ onMounted(async () => {
     line-height: 1.45;
   }
 
+  &__feedback {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  &__feedback-thanks {
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
   @include tablet-l {
     &__hero {
       grid-template-columns: 1fr;
@@ -411,10 +500,6 @@ onMounted(async () => {
 
     &__copy {
       display: contents;
-    }
-
-    &__eyebrow {
-      order: 1;
     }
 
     &__title {
