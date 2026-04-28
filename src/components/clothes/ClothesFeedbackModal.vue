@@ -17,10 +17,10 @@ const emit = defineEmits<{
 }>()
 
 const feedbackReasons: { value: FeedbackRating; label: string }[] = [
-  { value: 'good', label: 'Все подошло' },
-  { value: 'too_cold', label: 'Было холодно' },
-  { value: 'too_warm', label: 'Было жарко' },
-  { value: 'wet', label: 'Не хватило защиты от осадков' }
+  { value: 'good', label: 'Все хорошо' },
+  { value: 'too_cold', label: 'В этом холодно' },
+  { value: 'too_warm', label: 'В этом жарко' },
+  { value: 'wet', label: 'Не учтены осадки' }
 ]
 
 const selectedScore = ref<number | null>(null)
@@ -56,7 +56,6 @@ const onSubmit = () => {
     </div>
 
     <div class="feedback-modal__rating">
-      <span class="feedback-modal__rating-bound">1</span>
       <div
         class="feedback-modal__stars"
         role="radiogroup"
@@ -77,10 +76,16 @@ const onSubmit = () => {
           @blur="hoveredScore = null"
           @click="selectedScore = score"
         >
-          ★
+          <svg
+            width="24" height="24" viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              d="m12 16.102l-3.63 2.192q-.16.079-.297.064q-.136-.016-.265-.094q-.13-.08-.196-.226t-.012-.319l.966-4.11l-3.195-2.77q-.135-.11-.178-.263t.019-.293t.165-.23q.104-.087.28-.118l4.216-.368l1.644-3.892q.068-.165.196-.238T12 5.364t.288.073t.195.238l1.644 3.892l4.215.368q.177.03.281.119q.104.088.166.229q.061.14.018.293t-.178.263l-3.195 2.77l.966 4.11q.056.171-.011.318t-.197.226q-.128.08-.265.095q-.136.015-.296-.064z"
+            />
+          </svg>
         </button>
       </div>
-      <span class="feedback-modal__rating-bound">10</span>
     </div>
 
     <p class="feedback-modal__selected-score">
@@ -174,16 +179,13 @@ const onSubmit = () => {
   &__stars {
     display: grid;
     grid-template-columns: repeat(10, minmax(0, 1fr));
-    gap: rem(4);
   }
 
   &__star {
+    @include square(48);
     @include flex-center;
 
     min-width: 0;
-    height: rem(36);
-    font-size: rem(24);
-    line-height: 1;
     color: var(--color-gray);
     border-radius: rem(8);
 
@@ -194,6 +196,14 @@ const onSubmit = () => {
 
     &--active {
       color: #f4c94b;
+    }
+
+    & svg {
+      @include square(32);
+    }
+
+    @include mobile-l {
+      @include square(32);
     }
   }
 
@@ -261,6 +271,7 @@ const onSubmit = () => {
     border: rem(1) solid var(--color-gray);
     border-radius: rem(14);
     outline: none;
+    resize: none;
 
     &:focus {
       border-color: var(--color-accent);

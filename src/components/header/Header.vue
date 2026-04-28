@@ -20,8 +20,8 @@ const isMenuOpen = ref(false)
 const isTelegram = ref(false)
 const messenger = computed(() => authStore.messenger)
 
-const initDataRaw = ref<string | undefined>(undefined);
-const initDataParsed = ref<any>(null);
+const initDataRaw = ref<string | undefined>(undefined)
+const initDataParsed = ref<any>(null)
 
 onMounted(async () => {
   try {
