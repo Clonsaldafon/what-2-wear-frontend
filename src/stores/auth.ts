@@ -12,6 +12,8 @@ type AuthResult = {
   fieldErrors?: Record<string, string[]>
 }
 
+export type UserGender = 'unspecified' | 'male' | 'female'
+
 const getAuthErrorMessage = (error: unknown, fallbackMessage: string): AuthResult => {
   if (!(error instanceof AxiosError)) {
     return {
@@ -71,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const register = async (credentials: { username: string; email?: string; password: string }) => {
+  const register = async (credentials: { username: string; email?: string; password: string; gender?: UserGender }) => {
     try {
       const response = await apiClient.post('/auth/register/', credentials)
 
@@ -86,12 +88,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const messengerLogin = async (messengerType: string, messengerUserId: string, initData?: string) => {
+  const messengerLogin = async (messengerType: string, messengerUserId: string, initData?: string, gender?: UserGender) => {
     try {
       const response = await apiClient.post('/auth/messenger/', {
         messenger_type: messengerType,
         messenger_user_id: messengerUserId,
-        init_data: initData
+        init_data: initData,
+        gender: gender ?? 'unspecified'
       })
 
       setTokens(response.data.access_token, response.data.refresh_token)

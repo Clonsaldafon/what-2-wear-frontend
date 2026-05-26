@@ -16,6 +16,9 @@ type SignalItem = {
   value: string
 }
 
+const UMBRELLA_ACCESSORIES = new Set(['umbrella'])
+const UMBRELLA_PROBABILITY_THRESHOLD = 50
+
 const weatherStore = useWeatherStore()
 const { city, currentWeather, hourlyForecast, loading } = storeToRefs(weatherStore)
 const isFeedbackModalOpen = ref(false)
@@ -45,12 +48,19 @@ const canSendFeedback = computed(() => (
   && Boolean(currentWeather.value?.request_id)
   && !feedbackSubmitted.value
 ))
+const isRainLikely = computed(() => {
+  if (currentWeather.value?.precipitation_type !== 'rain') return false
+
+  return (precipitationProbability.value ?? 0) >= UMBRELLA_PROBABILITY_THRESHOLD
+})
 const needsUmbrella = computed(() => {
   const accessories = recommendation.value?.accessories ?? []
+  const hasRainUmbrella = accessories.some((accessory) => UMBRELLA_ACCESSORIES.has(accessory))
 
-  return accessories.includes('umbrella')
-    || Boolean(currentWeather.value?.has_precipitation && currentWeather.value?.precipitation_type === 'rain')
-    || (precipitationProbability.value ?? 0) >= 70
+  return isRainLikely.value && (
+    hasRainUmbrella
+    || Boolean(currentWeather.value?.has_precipitation)
+  )
 })
 
 const signalItems = computed<SignalItem[]>(() => {
@@ -110,6 +120,26 @@ const recommendationTitle = computed(() => {
   return recommendation.value ? 'Подходящий комплект' : 'Рекомендация недоступна'
 })
 
+const alternativeItems = computed(() => {
+  const alternatives = recommendation.value?.alternatives
+
+  if (!alternatives) return []
+
+  return Object.entries(alternatives)
+    .map(([category, values]) => {
+      const visibleValues = needsUmbrella.value
+        ? values
+        : values.filter((value) => !value.toLowerCase().includes('зонт'))
+
+      return {
+        category,
+        values: visibleValues
+      }
+    })
+    .filter((item) => item.values.length > 0)
+    .map((item) => `${item.category}: ${item.values.join(', ')}`)
+})
+
 const recommendationItems = computed(() => {
   if (!hasSelectedCity.value) {
     return [
@@ -137,17 +167,22 @@ const recommendationItems = computed(() => {
     ]
   }
 
-  const items = recommendation.value?.items || [
+  const items = alternativeItems.value.length
+    ? alternativeItems.value
+    : recommendation.value?.items || [
     `Прогноз для ${heroCity.value} уже загружен`,
     `Сейчас на улице ${currentWeather.value.temperature}°C, ощущается как ${currentWeather.value.feels_like}°C`,
     'Рекомендация по одежде не пришла от сервера'
-  ]
+    ]
+  const visibleItems = needsUmbrella.value
+    ? items
+    : items.filter((item) => !item.toLowerCase().includes('зонт'))
 
-  if (!needsUmbrella.value || items.some((item) => item.toLowerCase().includes('зонт'))) {
-    return items
+  if (!needsUmbrella.value || visibleItems.some((item) => item.toLowerCase().includes('зонт'))) {
+    return visibleItems
   }
 
-  return [...items, 'Защита от осадков: возьмите зонт']
+  return [...visibleItems, 'Защита от осадков: возьмите зонт']
 })
 
 const recommendationNote = computed(() => {
@@ -168,12 +203,15 @@ const recommendationNote = computed(() => {
 
 const recommendationNotes = computed(() => {
   const notes = recommendation.value?.notes.filter(Boolean) ?? []
+  const visibleNotes = needsUmbrella.value
+    ? notes
+    : notes.filter((note) => !note.toLowerCase().includes('зонт'))
 
-  if (!needsUmbrella.value || notes.some((note) => note.toLowerCase().includes('зонт'))) {
-    return notes
+  if (!needsUmbrella.value || visibleNotes.some((note) => note.toLowerCase().includes('зонт'))) {
+    return visibleNotes
   }
 
-  return [...notes, 'Вероятность осадков высокая, поэтому зонт лучше держать под рукой.']
+  return [...visibleNotes, 'Вероятность осадков высокая, поэтому зонт лучше держать под рукой.']
 })
 
 const onFeedbackOpen = () => {

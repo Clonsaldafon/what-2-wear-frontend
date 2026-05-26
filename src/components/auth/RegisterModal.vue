@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 
 import Button from '@/components/buttons/Button.vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore, type UserGender } from '@/stores/auth'
 import { useErrorStore } from '@/stores/error'
 
 import AuthModalLayout from './AuthModalLayout.vue'
@@ -19,7 +19,8 @@ const errorStore = useErrorStore()
 const form = reactive({
   username: '',
   email: '',
-  password: ''
+  password: '',
+  gender: 'unspecified' as UserGender
 })
 
 const loading = ref(false)
@@ -36,7 +37,8 @@ const onSubmit = async () => {
   const result = await authStore.register({
     username: form.username.trim(),
     email: form.email.trim() || undefined,
-    password: form.password
+    password: form.password,
+    gender: form.gender
   })
 
   loading.value = false
@@ -92,6 +94,19 @@ const onSubmit = async () => {
           autocomplete="new-password"
           placeholder="Придумайте пароль"
         >
+      </label>
+      <label class="auth-form__field">
+        <span class="auth-form__label">Пол</span>
+        <select
+          v-model="form.gender"
+          class="auth-form__input"
+          name="gender"
+          required
+        >
+          <option value=""></option>
+          <option value="male">Мужской</option>
+          <option value="female">Женский</option>
+        </select>
       </label>
       <Button
         class="auth-form__submit"
