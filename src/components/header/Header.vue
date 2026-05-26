@@ -8,11 +8,10 @@ import { isTMA, retrieveLaunchParams, retrieveRawInitData } from '@tma.js/sdk-vu
 import Button from '../buttons/Button.vue'
 import Logo from '../Logo.vue'
 import Menu from './menu/Menu.vue'
-import BurgerButton from '../buttons/BurgerButton.vue'
-import MenuOverlay from './menu/overlay/MenuOverlay.vue'
 
 import { useAuthStore } from '@/stores/auth'
 import { ROUTES } from '@/utils/constants'
+import MenuMobile from './menu/mobile/MenuMobile.vue'
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -95,6 +94,7 @@ const onAuthOpen = () => {
         v-if="!isAuthenticated && !messenger"
         class="hidden-tablet"
         :hasIcon="true"
+        :accent="true"
         @click="onAuthOpen"
       >
         <template #icon>
@@ -110,7 +110,7 @@ const onAuthOpen = () => {
         </template>
         <template #text>Войти</template>
       </Button>
-      <Button
+      <!-- <Button
         v-else-if="!messenger"
         class="hidden-tablet"
         :hasIcon="true"
@@ -127,21 +127,16 @@ const onAuthOpen = () => {
         </svg>
         </template>
         <template #text>Выйти</template>
-      </Button>
-      <BurgerButton
+      </Button> -->
+      <!-- <BurgerButton
         class="header__burger-button visible-tablet"
         @click="openMenu"
-      />
+      /> -->
     </div>
   </div>
-  <MenuOverlay
-    :class="`${!isMenuOpen ? 'visually-hidden' : ''}`"
+  <MenuMobile
     :isAuthenticated="isAuthenticated"
-    :messenger="messenger"
-    :onClose="closeMenu"
-    :onLogout="onLogout"
     @clothesMessageOpen="emit('clothesMessageOpen')"
-    @authOpen="emit('authOpen', $event)"
   />
 </template>
 

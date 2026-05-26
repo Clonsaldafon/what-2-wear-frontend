@@ -51,6 +51,7 @@ const props = withDefaults(
   &--accent {
     background-color: var(--color-accent);
     border-color: var(--color-accent);
+    box-shadow: 0 rem(4) rem(4) 0 rgba($color: #2E7D64, $alpha: 0.25);
   }
 
   &:disabled {

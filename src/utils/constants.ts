@@ -1,4 +1,6 @@
 export const ROUTES = {
   WEATHER: 'weather',
-  CLOTHES: 'clothes'
+  CLOTHES: 'clothes',
+  PROFILE: 'profile',
+  SETTINGS: 'settings'
 }

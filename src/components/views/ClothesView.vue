@@ -286,7 +286,7 @@ onMounted(async () => {
             v-if="heroCity"
             class="clothes__title-accent"
           >
-            в {{ heroCity }}
+            {{ heroCity }}
           </span>
         </h1>
         <p class="clothes__description">
@@ -394,26 +394,11 @@ onMounted(async () => {
     grid-template-columns: minmax(0, 1.15fr) minmax(rem(360), 0.95fr);
     gap: rem(24);
     padding: rem(34);
-    background:
-      radial-gradient(circle at top left, rgba(244, 201, 75, 0.2), transparent 22%),
-      radial-gradient(circle at 85% 15%, rgba(24, 169, 123, 0.18), transparent 24%),
-      linear-gradient(135deg, #ffffff, #f5f8f5 72%);
+    background: var(--color-light-alt);
     border: rem(1) solid rgba(44, 44, 44, 0.08);
     border-radius: rem(36);
     box-shadow: 0 rem(18) rem(45) rgba(44, 44, 44, 0.08);
     overflow: hidden;
-
-    &::after {
-      content: '';
-      position: absolute;
-      right: rem(-40);
-      bottom: rem(-80);
-      width: rem(280);
-      height: rem(280);
-      background: radial-gradient(circle, rgba(24, 169, 123, 0.12), transparent 70%);
-      filter: blur(rem(10));
-      pointer-events: none;
-    }
   }
 
   &__copy {
