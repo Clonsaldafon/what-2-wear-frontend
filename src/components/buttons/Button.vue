@@ -3,11 +3,13 @@ const props = withDefaults(
   defineProps<{
     type?: 'button' | 'submit' | 'reset'
     hasIcon?: boolean
+    hasText?: boolean
     disabled?: boolean
     accent?: boolean
   }>(), {
     type: 'button',
     hasIcon: false,
+    hasText: true,
     disabled: false,
     accent: false
   }
@@ -17,14 +19,14 @@ const props = withDefaults(
 <template>
   <button
     class="button"
-    :class="`${accent ? 'button--accent' : ''} ${disabled ? 'button--disabled' : ''}`"
+    :class="`${!hasText ? 'button--no-text' : ''} ${accent ? 'button--accent' : ''} ${disabled ? 'button--disabled' : ''}`"
     :type="type"
     :disabled="disabled"
   >
     <div v-if="hasIcon" class="button__icon">
       <slot name="icon"></slot>
     </div>
-    <div class="button__text">
+    <div v-if="hasText" class="button__text">
       <slot name="text"></slot>
     </div>
   </button>
@@ -48,6 +50,12 @@ const props = withDefaults(
     background-color: transparent;
   }
 
+  &--no-text {
+    @include square(44);
+
+    padding: rem(10);
+  }
+
   &--accent {
     background-color: var(--color-accent);
     border-color: var(--color-accent);
@@ -68,10 +76,6 @@ const props = withDefaults(
     @include fluid-text(18, 14);
     
     font-weight: 600;
-  }
-
-  @include tablet-l {
-    padding: rem(8) rem(24);
   }
 }
 </style>
