@@ -50,7 +50,7 @@ onBeforeUnmount(() => {
   &__modal {
     display: flex;
     justify-content: center;
-    // width: 100%;
+    width: 100%;
     max-height: calc(100vh - #{rem(80)});
     z-index: 1001;
   }

@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 import Button from '../buttons/Button.vue'
 import Header from '../header/Header.vue'
 import Overlay from '../Overlay.vue'
 import UserCard from '../profile/UserCard.vue'
 import AddWardrobeItemModal from '../profile/AddWardrobeItemModal.vue'
-
-import { useWardrobeStore } from '@/stores/wardrobes.ts'
 import WardrobeItemCard from '../profile/WardrobeItemCard.vue'
 
+import { useAuthStore } from '@/stores/auth.ts'
+import { useWardrobeStore } from '@/stores/wardrobes.ts'
+import { storeToRefs } from 'pinia'
+
+const authStore = useAuthStore()
 const wardrobeStore = useWardrobeStore()
+
+const { isAuthenticated, messenger, username, telegramPhoto } = storeToRefs(authStore)
+
+const userPhoto = computed(() => messenger.value === 'telegram' ? telegramPhoto.value : undefined)
 
 type ModalView = 'wardrobe-item' | null
 
@@ -27,14 +34,15 @@ const onModalClose = () => {
 
 <template>
   <Header />
-  <section class="profile section container">
+  <section v-if="authStore.isAuthenticated" class="profile section container">
     <h1 class="visually-hidden h1">Мой профиль</h1>
     <UserCard
-      :username="'test1'"
-      :photoUrl="'https://i.pinimg.com/736x/7e/d8/5e/7ed85ee454dfb6b67f8aed3a626827bf.jpg'"
+      :username="username || 'Пользователь'"
+      :email="'Почта не указана'"
+      :photoUrl="telegramPhoto || undefined"
     />
   </section>
-  <section class="wardrobe container">
+  <section v-if="authStore.isAuthenticated" class="wardrobe container">
     <header class="wardrobe__header">
       <h2 class="wardrobe__title h2">Мой гардероб</h2>
       <Button

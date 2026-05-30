@@ -5,6 +5,7 @@ import { ROUTES } from '@/utils/constants'
 const Weather = () => import('@/components/views/WeatherView.vue')
 const Clothes = () => import('@/components/views/ClothesView.vue')
 const Profile = () => import('@/components/views/ProfileView.vue')
+const Settings = () => import('@/components/views/SettingsView.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,6 +29,11 @@ const router = createRouter({
       path: `/${ROUTES.PROFILE}`,
       name: `${ROUTES.PROFILE}`,
       component: Profile
+    },
+    {
+      path: `/${ROUTES.SETTINGS}`,
+      name: `${ROUTES.SETTINGS}`,
+      component: Settings
     }
   ]
 })

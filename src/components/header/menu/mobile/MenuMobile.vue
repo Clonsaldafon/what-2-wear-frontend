@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import MenuMobileItem from './MenuMobileItem.vue'
@@ -9,18 +10,20 @@ const props = defineProps<{
   isAuthenticated: boolean
 }>()
 
-const emit = defineEmits(['clothesMessageOpen'])
+const emit = defineEmits(['clothesMessageOpen', 'loginOpen'])
+
 const route = useRoute()
 
-const onClothesMessageOpen = () => {
-  emit('clothesMessageOpen')
-}
+const onClothesMessageOpen = () => emit('clothesMessageOpen')
 </script>
 
 <template>
   <nav class="menu-mobile visible-tablet">
-    <ul class="menu-mobile__list">
-      <li class="menu-mobile__item">
+    <ul
+      class="menu-mobile__list"
+      :class="{'menu-mobile__list--space-evenly': !isAuthenticated}"
+    >
+      <li v-if="isAuthenticated" class="menu-mobile__item">
         <MenuMobileItem
           :route="ROUTES.SETTINGS"
           :isClothes="false"
@@ -44,7 +47,7 @@ const onClothesMessageOpen = () => {
           </template>
         </MenuMobileItem>
       </li>
-      <li class="menu-mobile__item">
+      <li v-if="isAuthenticated" class="menu-mobile__item">
         <MenuMobileItem
           :route="ROUTES.PROFILE"
           :isClothes="false"
@@ -120,6 +123,10 @@ const onClothesMessageOpen = () => {
     justify-content: space-between;
     column-gap: rem(28);
     padding: rem(16) rem(32);
+
+    &--space-evenly {
+      justify-content: space-evenly;
+    }
   }
 }
 </style>

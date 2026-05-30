@@ -6,12 +6,14 @@ const props = withDefaults(
     hasText?: boolean
     disabled?: boolean
     accent?: boolean
+    outlined?: boolean
   }>(), {
     type: 'button',
     hasIcon: false,
     hasText: true,
     disabled: false,
-    accent: false
+    accent: false,
+    outlined: false
   }
 )
 </script>
@@ -19,7 +21,7 @@ const props = withDefaults(
 <template>
   <button
     class="button"
-    :class="`${!hasText ? 'button--no-text' : ''} ${accent ? 'button--accent' : ''} ${disabled ? 'button--disabled' : ''}`"
+    :class="`${!hasText ? 'button--no-text' : ''} ${accent ? 'button--accent' : ''} ${outlined ? 'button--outlined' : ''} ${disabled ? 'button--disabled' : ''}`"
     :type="type"
     :disabled="disabled"
   >
@@ -60,6 +62,16 @@ const props = withDefaults(
     background-color: var(--color-accent);
     border-color: var(--color-accent);
     box-shadow: 0 rem(4) rem(4) 0 rgba($color: #2E7D64, $alpha: 0.25);
+  }
+
+  &--outlined {
+    color: var(--color-dark);
+    background-color: transparent;
+
+    @include hover {
+      color: var(--color-light);
+      background-color: var(--color-dark);
+    }
   }
 
   &:disabled {

@@ -16,6 +16,7 @@ const emit = defineEmits<{
 const errorStore = useErrorStore()
 const wardrobeStore = useWardrobeStore()
 
+const fileInput = ref<HTMLInputElement | null>(null)
 const photoFile = ref<File | null>(null)
 const photoPreview = ref<string | null>(null)
 
@@ -31,6 +32,10 @@ const filteredItemTypes = computed(() => {
   if (!form.value.category) return []
   return ITEM_TYPE_OPTIONS[form.value.category] || []
 })
+
+const triggerFileSelect = () => {
+  fileInput.value?.click()
+}
 
 const onCategoryChange = () => {
   form.value.item_type = ''
@@ -51,6 +56,14 @@ const handleFileChange = (event: Event) => {
   } else {
     photoFile.value = null
     photoPreview.value = null
+  }
+}
+
+const clearPhoto = () => {
+  photoFile.value = null
+  photoPreview.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
   }
 }
 
@@ -96,21 +109,56 @@ const onSubmit = async () => {
     </div>
     <h2 class="add-wardrobe-item-modal__title h2">Новая вещь</h2>
     <div class="add-wardrobe-item-modal__fields">
-      <div class="add-wardrobe-item-modal__field">
-        <label class="add-wardrobe-item-modal__label" for="photo">Фото</label>
+      <div
+        class="add-wardrobe-item-modal__photo"
+        @click="triggerFileSelect"
+      >
         <input
-          class="add-wardrobe-item-modal__input"
+          ref="fileInput"
+          class="add-wardrobe-item-modal__photo-input"
           id="photo"
           type="file"
           accept="image/*"
           @change="handleFileChange"
           required
         >
-        <div v-if="photoPreview" class="add-wardrobe-item-modal__preview">
+        <div
+          v-if="!photoPreview"
+          class="add-wardrobe-item-modal__photo-placeholder"
+        >
+          <svg
+            class="add-wardrobe-item-modal__photo-icon"
+            width="32" height="32" viewBox="0 0 32 32"
+            fill="none"
+          >
+            <path
+              d="M28 6H24.5L21.5 3H10.5L7.5 6H4C2.9 6 2 6.9 2 8V24C2 25.1 2.9 26 4 26H28C29.1 26 30 25.1 30 24V8C30 6.9 29.1 6 28 6ZM16 22C12.7 22 10 19.3 10 16C10 12.7 12.7 10 16 10C19.3 10 22 12.7 22 16C22 19.3 19.3 22 16 22Z"
+              fill="currentColor"
+            />
+            <path
+              d="M16 12C13.8 12 12 13.8 12 16C12 18.2 13.8 20 16 20C18.2 20 20 18.2 20 16C20 13.8 18.2 12 16 12Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span class="add-wardrobe-item-modal__photo-text">Выберите фото</span>
+        </div>
+        <div
+          v-else
+          class="add-wardrobe-item-modal__photo-preview"
+        >
+          <button
+            type="button"
+            class="add-wardrobe-item-modal__photo-remove"
+            @click.stop="clearPhoto"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
           <img
-            class="add-wardrobe-item-modal__preview-image"
+            class="add-wardrobe-item-modal__photo-preview-image"
             :src="photoPreview"
-            alt="Preview"
+            alt=""
           >
         </div>
       </div>
@@ -229,16 +277,87 @@ const onSubmit = async () => {
     text-align: center;
   }
 
+  &__photo {
+    position: relative;
+    width: 100%;
+    min-height: rem(160);
+    border: rem(1) dashed var(--color-gray);
+    border-radius: rem(16);
+    cursor: pointer;
+    transition-duration: var(--transition-duration);
+
+    @include hover {
+      border-color: var(--color-accent);
+      background: rgba(24, 169, 123, 0.1);
+    }
+
+    &-input {
+      display: none;
+    }
+
+    &-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      row-gap: rem(12);
+      min-height: rem(160);
+    }
+
+    &-icon {
+      color: var(--color-accent);
+      width: rem(48);
+      height: rem(48);
+    }
+
+    &-text {
+      font-size: rem(14);
+      color: var(--color-gray);
+      text-align: center;
+    }
+
+    &-preview {
+      width: 100%;
+      min-height: rem(160);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: rem(8);
+    }
+
+    &-preview-image {
+      max-width: 100%;
+      max-height: rem(120);
+      object-fit: contain;
+      border-radius: rem(12);
+    }
+  }
+
+  &__photo-remove {
+    position: absolute;
+    top: rem(8);
+    right: rem(8);
+    width: rem(28);
+    height: rem(28);
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition-duration: var(--transition-duration);
+    
+    @include hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+  }
+
   &__fields {
     display: flex;
     flex-direction: column;
     row-gap: rem(16);
-  }
-
-  &__preview {
-    &-image {
-      @include square(50);
-    }
   }
 
   &__field {

@@ -10,11 +10,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['clothesMessageOpen'])
+
 const route = useRoute()
 
-const onClothesMessageOpen = () => {
-  emit('clothesMessageOpen')
-}
+const onClothesMessageOpen = () => emit('clothesMessageOpen')
 </script>
 
 <template>
@@ -35,14 +34,18 @@ const onClothesMessageOpen = () => {
           @clothes="onClothesMessageOpen"
         />
       </li>
-      <li
-        v-if="isAuthenticated"
-        class="menu__item visually-hidden"
-      >
+      <li v-if="isAuthenticated" class="menu__item">
         <MenuItem
-          :route="'/'"
+          :route="ROUTES.PROFILE"
           :text="'Профиль'"
-          :selected="false"
+          :selected="route.name === ROUTES.PROFILE"
+        />
+      </li>
+      <li v-if="isAuthenticated" class="menu__item">
+        <MenuItem
+          :route="ROUTES.SETTINGS"
+          :text="'Настройки'"
+          :selected="route.name === ROUTES.SETTINGS"
         />
       </li>
     </ul>

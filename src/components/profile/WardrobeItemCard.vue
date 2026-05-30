@@ -34,7 +34,7 @@ const props = defineProps<{
   border-radius: rem(15);
 
   &__image {
-    @include square(50);
+    @include square(60);
 
     object-fit: cover;
     border-radius: rem(5);
