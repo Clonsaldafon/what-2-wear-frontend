@@ -3,13 +3,17 @@ const props = withDefaults(
   defineProps<{
     type?: 'button' | 'submit' | 'reset'
     hasIcon?: boolean
+    hasText?: boolean
     disabled?: boolean
     accent?: boolean
+    outlined?: boolean
   }>(), {
     type: 'button',
     hasIcon: false,
+    hasText: true,
     disabled: false,
-    accent: false
+    accent: false,
+    outlined: false
   }
 )
 </script>
@@ -17,14 +21,14 @@ const props = withDefaults(
 <template>
   <button
     class="button"
-    :class="`${accent ? 'button--accent' : ''} ${disabled ? 'button--disabled' : ''}`"
+    :class="`${!hasText ? 'button--no-text' : ''} ${accent ? 'button--accent' : ''} ${outlined ? 'button--outlined' : ''} ${disabled ? 'button--disabled' : ''}`"
     :type="type"
     :disabled="disabled"
   >
     <div v-if="hasIcon" class="button__icon">
       <slot name="icon"></slot>
     </div>
-    <div class="button__text">
+    <div v-if="hasText" class="button__text">
       <slot name="text"></slot>
     </div>
   </button>
@@ -48,9 +52,26 @@ const props = withDefaults(
     background-color: transparent;
   }
 
+  &--no-text {
+    @include square(44);
+
+    padding: rem(10);
+  }
+
   &--accent {
     background-color: var(--color-accent);
     border-color: var(--color-accent);
+    box-shadow: 0 rem(4) rem(4) 0 rgba($color: #2E7D64, $alpha: 0.25);
+  }
+
+  &--outlined {
+    color: var(--color-dark);
+    background-color: transparent;
+
+    @include hover {
+      color: var(--color-light);
+      background-color: var(--color-dark);
+    }
   }
 
   &:disabled {
@@ -67,10 +88,6 @@ const props = withDefaults(
     @include fluid-text(18, 14);
     
     font-weight: 600;
-  }
-
-  @include tablet-l {
-    padding: rem(8) rem(24);
   }
 }
 </style>

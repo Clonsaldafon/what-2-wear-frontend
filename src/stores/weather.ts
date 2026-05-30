@@ -23,6 +23,7 @@ interface ClothingRecommendation {
   accessories: string[]
   notes: string[]
   outfit: Record<string, string>
+  alternatives?: Record<string, string[]>
 }
 
 const formatDisplayCity = (value: string) => {

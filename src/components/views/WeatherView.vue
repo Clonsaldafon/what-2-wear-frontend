@@ -29,14 +29,26 @@ const precipitationProbability = computed(() => {
   return hourlyProbability ?? currentWeather.value?.precipitation_probability ?? null
 })
 
+const hasMeaningfulPrecipitation = computed(() => (
+  Boolean(currentWeather.value?.has_precipitation)
+  && (precipitationProbability.value ?? 0) > 0
+))
+
+const effectivePrecipitationType = computed(() => {
+  if (!hasMeaningfulPrecipitation.value) return 'none'
+
+  return currentWeather.value?.precipitation_type ?? 'none'
+})
+
 const precipitationLabel = computed(() => {
   if (!currentWeather.value) return 'Нет данных'
 
-  if (currentWeather.value.precipitation_type === 'rain') return 'Дождь'
-  if (currentWeather.value.precipitation_type === 'snow') return 'Снег'
-  if (currentWeather.value.precipitation_type === 'sleet') return 'Мокрый снег'
+  if (precipitationProbability.value === 0) return 'Без осадков'
+  if (effectivePrecipitationType.value === 'rain') return 'Дождь'
+  if (effectivePrecipitationType.value === 'snow') return 'Снег'
+  if (effectivePrecipitationType.value === 'sleet') return 'Мокрый снег'
 
-  return currentWeather.value.has_precipitation ? 'Возможны осадки' : 'Без осадков'
+  return hasMeaningfulPrecipitation.value ? 'Возможны осадки' : 'Без осадков'
 })
 
 const weatherDetails = computed(() => {
@@ -115,8 +127,8 @@ const onModalClose = () => {
           :humidity="currentWeather.humidity"
           :windSpeed="currentWeather.wind_speed"
           :description="currentWeather.description"
-          :hasPrecipitation="currentWeather.has_precipitation"
-          :precipitationType="currentWeather.precipitation_type"
+          :hasPrecipitation="hasMeaningfulPrecipitation"
+          :precipitationType="effectivePrecipitationType"
           :isDayTime="currentWeather.is_day_time"
           :icon="currentWeather.icon"
           :showFooter="false"

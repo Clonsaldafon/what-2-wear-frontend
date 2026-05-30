@@ -1,22 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import router from '@/router'
-
 import { isTMA, retrieveLaunchParams, retrieveRawInitData } from '@tma.js/sdk-vue'
 
 import Button from '../buttons/Button.vue'
 import Logo from '../Logo.vue'
 import Menu from './menu/Menu.vue'
-import BurgerButton from '../buttons/BurgerButton.vue'
-import MenuOverlay from './menu/overlay/MenuOverlay.vue'
 
 import { useAuthStore } from '@/stores/auth'
-import { ROUTES } from '@/utils/constants'
+import MenuMobile from './menu/mobile/MenuMobile.vue'
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const isMenuOpen = ref(false)
 const isTelegram = ref(false)
 const messenger = computed(() => authStore.messenger)
 
@@ -64,19 +59,6 @@ onMounted(async () => {
 
 const emit = defineEmits(['clothesMessageOpen', 'authOpen'])
 
-const openMenu = () => {
-  isMenuOpen.value = true
-}
-
-const closeMenu = () => {
-  isMenuOpen.value = false
-}
-
-const onLogout = () => {
-  authStore.logout()
-  router.push({ name: ROUTES.WEATHER })
-}
-
 const onAuthOpen = () => {
   emit('authOpen', 'login')
 }
@@ -93,8 +75,8 @@ const onAuthOpen = () => {
     <div class="header__actions">
       <Button
         v-if="!isAuthenticated && !messenger"
-        class="hidden-tablet"
         :hasIcon="true"
+        :accent="true"
         @click="onAuthOpen"
       >
         <template #icon>
@@ -110,38 +92,11 @@ const onAuthOpen = () => {
         </template>
         <template #text>Войти</template>
       </Button>
-      <Button
-        v-else-if="!messenger"
-        class="hidden-tablet"
-        :hasIcon="true"
-        @click="onLogout"
-      >
-        <template #icon>
-          <svg
-            width="24" height="24" viewBox="0 0 24 24"
-            fill="none">
-          <path
-            d="M10.504 21H17.5C18.605 21 19.5 19.849 19.5 18.429V5.57C19.5 4.151 18.605 3 17.5 3H10.5M8 15.5L4.5 12L8 8.5M14.5 11.996H4.5"
-            stroke="#FCFAF7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-          />
-        </svg>
-        </template>
-        <template #text>Выйти</template>
-      </Button>
-      <BurgerButton
-        class="header__burger-button visible-tablet"
-        @click="openMenu"
-      />
     </div>
   </div>
-  <MenuOverlay
-    :class="`${!isMenuOpen ? 'visually-hidden' : ''}`"
+  <MenuMobile
     :isAuthenticated="isAuthenticated"
-    :messenger="messenger"
-    :onClose="closeMenu"
-    :onLogout="onLogout"
     @clothesMessageOpen="emit('clothesMessageOpen')"
-    @authOpen="emit('authOpen', $event)"
   />
 </template>
 

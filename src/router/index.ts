@@ -2,6 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { ROUTES } from '@/utils/constants'
 
+const Weather = () => import('@/components/views/WeatherView.vue')
+const Clothes = () => import('@/components/views/ClothesView.vue')
+const Profile = () => import('@/components/views/ProfileView.vue')
+const Settings = () => import('@/components/views/SettingsView.vue')
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -12,13 +17,23 @@ const router = createRouter({
     {
       path: `/${ROUTES.WEATHER}`,
       name: `${ROUTES.WEATHER}`,
-      component: () => import('@/components/views/WeatherView.vue'),
+      component: Weather,
       meta: { requiresGuest: true }
     },
     {
       path: `/${ROUTES.CLOTHES}`,
       name: `${ROUTES.CLOTHES}`,
-      component: () => import('@/components/views/ClothesView.vue')
+      component: Clothes
+    },
+    {
+      path: `/${ROUTES.PROFILE}`,
+      name: `${ROUTES.PROFILE}`,
+      component: Profile
+    },
+    {
+      path: `/${ROUTES.SETTINGS}`,
+      name: `${ROUTES.SETTINGS}`,
+      component: Settings
     }
   ]
 })

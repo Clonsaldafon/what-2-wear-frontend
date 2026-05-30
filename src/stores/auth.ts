@@ -12,6 +12,8 @@ type AuthResult = {
   fieldErrors?: Record<string, string[]>
 }
 
+export type UserGender = 'unspecified' | 'male' | 'female'
+
 const getAuthErrorMessage = (error: unknown, fallbackMessage: string): AuthResult => {
   if (!(error instanceof AxiosError)) {
     return {
@@ -41,6 +43,18 @@ const getAuthErrorMessage = (error: unknown, fallbackMessage: string): AuthResul
   }
 }
 
+const username = ref<string | null>(localStorage.getItem('username') || null)
+const telegramPhoto = ref<string | null>(null)
+
+const setUsername = (name: string) => {
+  username.value = name
+  localStorage.setItem('username', name)
+}
+
+const setTelegramPhoto = (photo: string) => {
+  telegramPhoto.value = photo
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(localStorage.getItem('accessToken') || null)
   const refreshToken = ref(localStorage.getItem('refreshToken') || null)
@@ -61,6 +75,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await apiClient.post('/auth/token/', credentials)
 
       setTokens(response.data.access_token, response.data.refresh_token)
+      setUsername(credentials.username)
 
       return {
         success: true
@@ -71,11 +86,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const register = async (credentials: { username: string; email?: string; password: string }) => {
+  const register = async (credentials: { username: string; email?: string; password: string; gender?: UserGender }) => {
     try {
       const response = await apiClient.post('/auth/register/', credentials)
 
       setTokens(response.data.access_token, response.data.refresh_token)
+      setUsername(credentials.username)
 
       return {
         success: true
@@ -86,18 +102,29 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const messengerLogin = async (messengerType: string, messengerUserId: string, initData?: string) => {
+  const messengerLogin = async (messengerType: string, messengerUserId: string, initData?: string, gender?: UserGender) => {
     try {
       const response = await apiClient.post('/auth/messenger/', {
         messenger_type: messengerType,
         messenger_user_id: messengerUserId,
-        init_data: initData
+        init_data: initData,
+        gender: gender ?? 'unspecified'
       })
 
       setTokens(response.data.access_token, response.data.refresh_token)
       messenger.value = messengerType
 
       localStorage.setItem('messenger', messengerType)
+
+      if (messengerType === 'telegram') {
+        const initDataUnsafe = (window as any).Telegram?.WebApp?.initDataUnsafe
+        if (initDataUnsafe?.user) {
+          const { first_name, last_name, photo_url } = initDataUnsafe.user
+          const fullName = [first_name, last_name].filter(Boolean).join(' ') || 'Пользователь'
+          setUsername(fullName)
+          if (photo_url) setTelegramPhoto(photo_url)
+        }
+      }
 
       return true
     } catch (error) {
@@ -138,6 +165,10 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('messenger')
+
+    username.value = null
+    telegramPhoto.value = null
+    localStorage.removeItem('username')
   }
 
   return {
@@ -145,6 +176,8 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     messenger,
     isAuthenticated,
+    username,
+    telegramPhoto,
     setTokens,
     login,
     register,

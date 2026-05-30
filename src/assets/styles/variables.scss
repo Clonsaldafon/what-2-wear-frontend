@@ -10,7 +10,7 @@
   --color-gray: #C8C8C8;
   --color-gray-alt: #FAFAFA;
 
-  --color-accent: #18A97B;
+  --color-accent: #2E7D64;
 
   --color-error: #DC2828;
 
@@ -33,6 +33,6 @@
   --transition-duration: 0.2s;
 
   @include tablet {
-    --container-padding-x: #{rem(40)};
+    --container-padding-x: #{rem(20)};
   }
 }

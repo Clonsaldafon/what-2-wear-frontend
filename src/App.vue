@@ -1,10 +1,29 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
-import { useErrorStore } from './stores/error';
-import GlobalErrorBanner from './components/errors/GlobalErrorBanner.vue';
-import ErrorBanner from './components/errors/ErrorBanner.vue';
+import { watch } from 'vue'
+import { RouterView } from 'vue-router'
 
-const errorStore = useErrorStore();
+import GlobalErrorBanner from './components/errors/GlobalErrorBanner.vue'
+import ErrorBanner from './components/errors/ErrorBanner.vue'
+
+import { useErrorStore } from './stores/error'
+import { useAuthStore } from './stores/auth.ts'
+import { useWardrobeStore } from './stores/wardrobes.ts'
+
+const errorStore = useErrorStore()
+const authStore = useAuthStore()
+const wardrobeStore = useWardrobeStore()
+
+watch(
+  () => authStore.isAuthenticated,
+  async (isAuthenticated) => {
+    if (isAuthenticated) {
+      await wardrobeStore.fetchItems()
+    } else {
+      wardrobeStore.items = []
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
