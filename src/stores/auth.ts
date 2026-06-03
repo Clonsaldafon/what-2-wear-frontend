@@ -43,23 +43,12 @@ const getAuthErrorMessage = (error: unknown, fallbackMessage: string): AuthResul
   }
 }
 
-const username = ref<string | null>(localStorage.getItem('username') || null)
-const telegramPhoto = ref<string | null>(null)
-
-const setUsername = (name: string) => {
-  username.value = name
-  localStorage.setItem('username', name)
-}
-
-const setTelegramPhoto = (photo: string) => {
-  telegramPhoto.value = photo
-}
-
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(localStorage.getItem('accessToken') || null)
   const refreshToken = ref(localStorage.getItem('refreshToken') || null)
   const messenger = ref(localStorage.getItem('messenger') || null)
-
+  const username = ref<string | null>(localStorage.getItem('username') || null)
+  const telegramPhoto = ref<string | null>(null)
   const isAuthenticated = computed(() => !!accessToken.value)
 
   const setTokens = (nextAccessToken: string, nextRefreshToken: string) => {
@@ -68,6 +57,15 @@ export const useAuthStore = defineStore('auth', () => {
 
     localStorage.setItem('accessToken', nextAccessToken)
     localStorage.setItem('refreshToken', nextRefreshToken)
+  }
+
+  const setUsername = (name: string) => {
+    username.value = name
+    localStorage.setItem('username', name)
+  }
+
+  const setTelegramPhoto = (photo: string) => {
+    telegramPhoto.value = photo
   }
 
   const login = async (credentials: { username: string; password: string }) => {
