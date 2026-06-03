@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 
 import Button from '../buttons/Button.vue'
 import Header from '../header/Header.vue'
@@ -8,10 +9,11 @@ import UserCard from '../profile/UserCard.vue'
 import AddWardrobeItemModal from '../profile/AddWardrobeItemModal.vue'
 import WardrobeItemCard from '../profile/WardrobeItemCard.vue'
 
+import { useErrorStore } from '@/stores/error.ts'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useWardrobeStore } from '@/stores/wardrobes.ts'
-import { storeToRefs } from 'pinia'
 
+const errorStore = useErrorStore()
 const authStore = useAuthStore()
 const wardrobeStore = useWardrobeStore()
 
@@ -30,6 +32,16 @@ const onAddWardrobeItemOpen = () => {
 const onModalClose = () => {
   activeModal.value = null
 }
+
+const handleDeleteWardrobeItem = async (itemId: number) => {
+  if (!confirm('Удалить эту вещь из гардероба?')) return
+
+  try {
+    await wardrobeStore.deleteItem(itemId)
+  } catch (err) {
+    errorStore.setError('Ошибка', 'Не удалось удалить вещь. Попробуйте позже.')
+  }
+}
 </script>
 
 <template>
@@ -39,7 +51,7 @@ const onModalClose = () => {
     <UserCard
       :username="username || 'Пользователь'"
       :email="'Почта не указана'"
-      :photoUrl="telegramPhoto || undefined"
+      :photoUrl="userPhoto || undefined"
     />
   </section>
   <section v-if="authStore.isAuthenticated" class="wardrobe container">
@@ -74,9 +86,11 @@ const onModalClose = () => {
           :value="item.image_url"
         >
           <WardrobeItemCard
+            :isProfile="true"
             :photoUrl="item.image_url"
             :type="item.item_type_display"
             :color="item.color_display"
+            @delete="handleDeleteWardrobeItem(item.id)"
           />
         </li>
       </ul>

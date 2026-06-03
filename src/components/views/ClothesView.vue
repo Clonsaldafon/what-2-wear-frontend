@@ -190,6 +190,7 @@ watch(
             <!-- карточка из гардероба (если есть) -->
             <WardrobeItemCard
               v-if="cat.match"
+              :isProfile="false"
               :photoUrl="cat.match.image_url"
               :type="cat.match.type"
               :color="cat.match.color"
