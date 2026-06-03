@@ -58,85 +58,39 @@ const needsUmbrella = computed(() => {
   return hasUmbrella || Boolean(currentWeather.value?.has_precipitation)
 })
 
-// -------------------------------------------------------------------
-// Логика подбора вещей из гардероба
-// -------------------------------------------------------------------
-const getMatchingWardrobeItem = (categoryKey: string, itemType: string): ClothingItem | null => {
-  if (!authStore.isAuthenticated) return null
-  return wardrobeStore.items.find(item => item.category === categoryKey && item.item_type === itemType) || null
-}
-
-const matchedOuterwear = computed<ClothingItem | null>(() =>
-  recommendation.value?.outfit?.outerwear
-    ? getMatchingWardrobeItem('outerwear', recommendation.value.outfit.outerwear)
-    : null
-)
-const matchedTop = computed<ClothingItem | null>(() =>
-  recommendation.value?.outfit?.top
-    ? getMatchingWardrobeItem('top', recommendation.value.outfit.top)
-    : null
-)
-const matchedBottom = computed<ClothingItem | null>(() =>
-  recommendation.value?.outfit?.bottom
-    ? getMatchingWardrobeItem('bottom', recommendation.value.outfit.bottom)
-    : null
-)
-const matchedFootwear = computed<ClothingItem | null>(() =>
-  recommendation.value?.outfit?.footwear
-    ? getMatchingWardrobeItem('footwear', recommendation.value.outfit.footwear)
-    : null
-)
-
-// Функция для получения списка вещей из текстовой строки рекомендации
-const extractFallbackItems = (categoryLabel: string): string[] => {
-  if (!recommendation.value?.items) return []
-  const fullLine = recommendation.value.items.find(line => line.startsWith(categoryLabel))
-  if (!fullLine) return []
-  const afterColon = fullLine.split(':')[1] || ''
-  return afterColon
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-}
-
 // список категорий с карточками и fallback-списками
 const categories = computed(() => [
   {
     key: 'outerwear',
     title: 'Верхняя одежда',
-    matchedItem: matchedOuterwear.value,
-    fallbackItems: extractFallbackItems('Верхняя одежда')
+    match: currentWeather.value?.wardrobe_matches?.outerwear ?? null,
+    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Верхняя одежда:')) || ''
   },
   {
     key: 'top',
     title: 'Верх',
-    matchedItem: matchedTop.value,
-    fallbackItems: extractFallbackItems('Базовый верх')
+    match: currentWeather.value?.wardrobe_matches?.top ?? null,
+    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Верх:') || i.startsWith('Базовый верх:')) || ''
   },
   {
     key: 'bottom',
     title: 'Низ',
-    matchedItem: matchedBottom.value,
-    fallbackItems: extractFallbackItems('Низ')
+    match: currentWeather.value?.wardrobe_matches?.bottom ?? null,
+    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Низ:')) || ''
   },
   {
     key: 'footwear',
     title: 'Обувь',
-    matchedItem: matchedFootwear.value,
-    fallbackItems: extractFallbackItems('Обувь')
+    match: currentWeather.value?.wardrobe_matches?.footwear ?? null,
+    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Обувь:')) || ''
   }
 ])
 
-// загружаем гардероб при авторизации
-watch(
-  () => authStore.isAuthenticated,
-  async (isAuth) => {
-    if (isAuth && wardrobeStore.items.length === 0) {
-      await wardrobeStore.fetchItems()
-    }
-  },
-  { immediate: true }
-)
+const getFallbackItems = (fallbackText: string): string[] => {
+  if (!fallbackText) return []
+  const afterColon = fallbackText.split(':')[1] || ''
+  return afterColon.split(',').map(s => s.trim()).filter(Boolean)
+}
 
 onMounted(async () => {
   if (weatherStore.city && !currentWeather.value && !loading.value) {
@@ -235,14 +189,14 @@ watch(
           <div class="clothes__category-grid">
             <!-- карточка из гардероба (если есть) -->
             <WardrobeItemCard
-              v-if="cat.matchedItem"
-              :photoUrl="cat.matchedItem.image_url"
-              :type="cat.matchedItem.item_type_display"
-              :color="cat.matchedItem.color_display"
+              v-if="cat.match"
+              :photoUrl="cat.match.image_url"
+              :type="cat.match.type"
+              :color="cat.match.color"
             />
             <!-- fallback: список вещей с маркерами -->
             <ul v-else class="clothes__fallback-list">
-              <li v-for="item in cat.fallbackItems" :key="item" class="clothes__fallback-item">
+              <li v-for="item in getFallbackItems(cat.fallbackText)" :key="item" class="clothes__fallback-item">
                 {{ item }}
               </li>
             </ul>

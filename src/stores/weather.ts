@@ -37,6 +37,14 @@ const formatDisplayCity = (value: string) => {
   return `${parts[0]}, ${parts[parts.length - 1]}`
 }
 
+export interface WardrobeMatch {
+  id: number
+  image_url: string
+  color: string
+  category: string
+  type: string
+}
+
 export interface CurrentWeather {
   city: string
   request_id?: number
@@ -52,6 +60,12 @@ export interface CurrentWeather {
   icon: string
   recommendation_source?: string
   recommendation?: ClothingRecommendation
+  wardrobe_matches: {
+    outerwear: WardrobeMatch | null,
+    top: WardrobeMatch | null,
+    bottom: WardrobeMatch | null,
+    footwear: WardrobeMatch | null
+  }
 }
 
 export interface HourlyForecast {
@@ -147,6 +161,8 @@ export const useWeatherStore = defineStore('weather', () => {
         params: { city: city.value }
       })
 
+      console.log(data)
+
       currentWeather.value = {
         city: formatDisplayCity(data.city),
         temperature: data.temperature,
@@ -161,7 +177,8 @@ export const useWeatherStore = defineStore('weather', () => {
         is_day_time: data.is_day_time,
         request_id: data.request_id,
         recommendation_source: data.recommendation_source,
-        recommendation: data.recommendation
+        recommendation: data.recommendation,
+        wardrobe_matches: data.wardrobe_matches
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Ошибка при загрузке прогноза погоды');
