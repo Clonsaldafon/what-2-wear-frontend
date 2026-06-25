@@ -9,7 +9,7 @@ defineProps<{
     :class="`cross-button ${color === 'light' ? 'cross-button--light' : ''}`"
     type="button"
   >
-    <span class="visually-hidden">Закрыть меню навигации</span>
+    <span class="visually-hidden">Закрыть</span>
   </button>
 </template>
 

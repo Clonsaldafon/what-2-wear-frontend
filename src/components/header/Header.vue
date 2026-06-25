@@ -27,6 +27,8 @@ onMounted(async () => {
       initDataParsed.value = tgWebAppData
       initDataRaw.value = retrieveRawInitData()
 
+      authStore.setTelegramUserData(initDataParsed.value)
+
       if (!authStore.isAuthenticated) {
         const telegramUserId = initDataParsed.value?.user?.id
         

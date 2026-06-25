@@ -131,6 +131,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const setTelegramUserData = (initData: any) => {
+    const user = initData?.user
+    if (user) {
+      const { first_name, last_name, photo_url } = user
+      const fullName = [first_name, last_name].filter(Boolean).join(' ') || 'Пользователь'
+      setUsername(fullName)
+      if (photo_url) setTelegramPhoto(photo_url)
+    }
+  }
+
   const refreshAccessToken = async () => {
     try {
       const response = await apiClient.post('/auth/token/refresh/', { refresh: refreshToken.value })
@@ -180,6 +190,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     messengerLogin,
+    setTelegramUserData,
     refreshAccessToken,
     logout
   }
