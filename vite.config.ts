@@ -16,6 +16,12 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['murderously-monumental-chinchilla.cloudpub.ru']
+    proxy: {
+      '/api': 'http://localhost:8000'
+    },
+    allowedHosts: [
+      'murderously-monumental-chinchilla.cloudpub.ru',
+      'reverently-interested-lyrebird.cloudpub.ru'
+    ]
   }
 })
