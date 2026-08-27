@@ -17,6 +17,13 @@ watch(
   () => authStore.isAuthenticated,
   async (isAuthenticated) => {
     if (isAuthenticated) {
+      try {
+        await authStore.fetchProfile()
+      } catch {
+        authStore.logout()
+        return
+      }
+
       await wardrobeStore.fetchItems()
     } else {
       wardrobeStore.items = []

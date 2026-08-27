@@ -75,7 +75,7 @@ export const ITEM_TYPE_OPTIONS: Record<string, { value: string, label: string }[
     { value: 'short_sleeve_shirt', label: 'Рубашка с коротким рукавом' },
     { value: 'tank_top', label: 'Майка' },
     { value: 'top', label: 'Топ' },
-    { value: 'hoodie_top', label: 'Худи (верх)' }
+    { value: 'hoodie', label: 'Худи' }
   ],
   bottom: [
     { value: 'jeans', label: 'Джинсы' },

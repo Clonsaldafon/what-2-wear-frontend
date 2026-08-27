@@ -25,7 +25,9 @@ const handleLogout = () => {
   <section class="settings section container">
     <h1 class="settings__title h1">Настройки</h1>
     <div class="settings__content">
-      Появятся позже...
+      <p v-if="authStore.isAuthenticated">
+        Данные для входа, почта и пол настраиваются в профиле.
+      </p>
       <Button
         v-if="showLogoutButton"
         :outlined="true"
@@ -51,6 +53,7 @@ const handleLogout = () => {
     display: flex;
     flex-direction: column;
     row-gap: rem(20);
+    max-width: rem(520);
   }
 }
 </style>

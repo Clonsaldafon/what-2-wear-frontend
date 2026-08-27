@@ -12,7 +12,21 @@ type AuthResult = {
   fieldErrors?: Record<string, string[]>
 }
 
+type MessengerLoginResult = AuthResult & {
+  status?: 'linked' | 'needs_account_link' | 'registered'
+  telegramLinkToken?: string
+}
+
 export type UserGender = 'unspecified' | 'male' | 'female'
+
+export type UserProfile = {
+  id: number
+  username: string | null
+  email: string
+  gender: UserGender
+  has_usable_password: boolean
+  messenger: string | null
+}
 
 const getAuthErrorMessage = (error: unknown, fallbackMessage: string): AuthResult => {
   if (!(error instanceof AxiosError)) {
@@ -48,7 +62,11 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref(localStorage.getItem('refreshToken') || null)
   const messenger = ref(localStorage.getItem('messenger') || null)
   const username = ref<string | null>(localStorage.getItem('username') || null)
+  const accountEmail = ref<string | null>(localStorage.getItem('accountEmail') || null)
+  const userGender = ref<UserGender>((localStorage.getItem('userGender') as UserGender | null) || 'unspecified')
+  const hasPasswordLogin = ref(localStorage.getItem('hasPasswordLogin') === 'true')
   const telegramPhoto = ref<string | null>(null)
+  const pendingMessengerLinkToken = ref<string | null>(null)
   const isAuthenticated = computed(() => !!accessToken.value)
 
   const setTokens = (nextAccessToken: string, nextRefreshToken: string) => {
@@ -68,66 +86,57 @@ export const useAuthStore = defineStore('auth', () => {
     telegramPhoto.value = photo
   }
 
-  const login = async (credentials: { username: string; password: string }) => {
-    try {
-      const response = await apiClient.post('/auth/token/', credentials)
+  const setAccountEmail = (email?: string | null) => {
+    accountEmail.value = email || null
 
-      setTokens(response.data.access_token, response.data.refresh_token)
-      setUsername(credentials.username)
-
-      return {
-        success: true
-      } as AuthResult
-    } catch (error) {
-      console.error('Login failed:', error)
-      return getAuthErrorMessage(error, 'Не удалось войти. Проверьте логин и пароль.')
+    if (accountEmail.value) {
+      localStorage.setItem('accountEmail', accountEmail.value)
+    } else {
+      localStorage.removeItem('accountEmail')
     }
   }
 
-  const register = async (credentials: { username: string; email?: string; password: string; gender?: UserGender }) => {
-    try {
-      const response = await apiClient.post('/auth/register/', credentials)
+  const setHasPasswordLogin = (value: boolean) => {
+    hasPasswordLogin.value = value
+    localStorage.setItem('hasPasswordLogin', String(value))
+  }
 
-      setTokens(response.data.access_token, response.data.refresh_token)
-      setUsername(credentials.username)
+  const setMessenger = (messengerType: string) => {
+    messenger.value = messengerType
+    localStorage.setItem('messenger', messengerType)
+  }
 
-      return {
-        success: true
-      } as AuthResult
-    } catch (error) {
-      console.error('Registration failed:', error)
-      return getAuthErrorMessage(error, 'Не удалось создать аккаунт. Попробуйте еще раз.')
+  const setUserGender = (gender: UserGender) => {
+    userGender.value = gender
+    localStorage.setItem('userGender', gender)
+  }
+
+  const applyProfile = (profile: UserProfile) => {
+    if (profile.username) setUsername(profile.username)
+    setAccountEmail(profile.email)
+    setUserGender(profile.gender)
+    setHasPasswordLogin(profile.has_usable_password)
+
+    if (profile.messenger) {
+      setMessenger(profile.messenger)
     }
   }
 
-  const messengerLogin = async (messengerType: string, messengerUserId: string, initData?: string, gender?: UserGender) => {
+  const fetchProfile = async () => {
+    if (!accessToken.value) return null
+
+    const response = await apiClient.get<UserProfile>('/auth/me/')
+    applyProfile(response.data)
+    return response.data
+  }
+
+  const updateProfile = async (payload: { username?: string; email?: string; gender?: UserGender; password?: string }) => {
     try {
-      const response = await apiClient.post('/auth/messenger/', {
-        messenger_type: messengerType,
-        messenger_user_id: messengerUserId,
-        init_data: initData,
-        gender: gender ?? 'unspecified'
-      })
-
-      setTokens(response.data.access_token, response.data.refresh_token)
-      messenger.value = messengerType
-
-      localStorage.setItem('messenger', messengerType)
-
-      if (messengerType === 'telegram') {
-        const initDataUnsafe = (window as any).Telegram?.WebApp?.initDataUnsafe
-        if (initDataUnsafe?.user) {
-          const { first_name, last_name, photo_url } = initDataUnsafe.user
-          const fullName = [first_name, last_name].filter(Boolean).join(' ') || 'Пользователь'
-          setUsername(fullName)
-          if (photo_url) setTelegramPhoto(photo_url)
-        }
-      }
-
-      return true
+      const response = await apiClient.patch<UserProfile>('/auth/me/', payload)
+      applyProfile(response.data)
+      return { success: true } as AuthResult
     } catch (error) {
-      console.error('Messenger login failed:', error)
-      return false
+      return getAuthErrorMessage(error, 'Не удалось сохранить профиль.')
     }
   }
 
@@ -138,6 +147,131 @@ export const useAuthStore = defineStore('auth', () => {
       const fullName = [first_name, last_name].filter(Boolean).join(' ') || 'Пользователь'
       setUsername(fullName)
       if (photo_url) setTelegramPhoto(photo_url)
+    }
+  }
+
+  const applyMessengerAuth = (messengerType: string, nextAccessToken: string, nextRefreshToken: string) => {
+    setTokens(nextAccessToken, nextRefreshToken)
+    setMessenger(messengerType)
+    pendingMessengerLinkToken.value = null
+
+    if (messengerType === 'telegram') {
+      const initDataUnsafe = (window as any).Telegram?.WebApp?.initDataUnsafe
+      setTelegramUserData(initDataUnsafe)
+    }
+  }
+
+  const login = async (credentials: { username: string; password: string }) => {
+    try {
+      const response = await apiClient.post('/auth/token/', credentials)
+
+      setTokens(response.data.access_token, response.data.refresh_token)
+      setUsername(credentials.username)
+      setHasPasswordLogin(true)
+      await fetchProfile()
+
+      return {
+        success: true
+      } as AuthResult
+    } catch (error) {
+      return getAuthErrorMessage(error, 'Не удалось войти. Проверьте логин и пароль.')
+    }
+  }
+
+  const register = async (credentials: { username: string; email?: string; password: string; gender?: UserGender }) => {
+    try {
+      const response = await apiClient.post('/auth/register/', credentials)
+
+      setTokens(response.data.access_token, response.data.refresh_token)
+      setUsername(credentials.username)
+      setAccountEmail(credentials.email)
+      setUserGender(credentials.gender ?? 'unspecified')
+      setHasPasswordLogin(true)
+      await fetchProfile()
+
+      return {
+        success: true
+      } as AuthResult
+    } catch (error) {
+      return getAuthErrorMessage(error, 'Не удалось создать аккаунт. Попробуйте еще раз.')
+    }
+  }
+
+  const messengerLogin = async (messengerType: string, messengerUserId: string, initData?: string, gender?: UserGender): Promise<MessengerLoginResult> => {
+    try {
+      const response = await apiClient.post('/auth/messenger/', {
+        messenger_type: messengerType,
+        messenger_user_id: messengerUserId,
+        init_data: initData,
+        gender: gender ?? 'unspecified'
+      })
+
+      if (response.data.status === 'linked' || (response.data.access_token && response.data.refresh_token)) {
+        applyMessengerAuth(messengerType, response.data.access_token, response.data.refresh_token)
+        await fetchProfile()
+        return { success: true, status: 'linked' }
+      }
+
+      if (response.data.status === 'needs_account_link') {
+        pendingMessengerLinkToken.value = response.data.telegram_link_token
+        return {
+          success: true,
+          status: 'needs_account_link',
+          telegramLinkToken: response.data.telegram_link_token
+        }
+      }
+
+      return { success: false, message: 'Неожиданный ответ сервера.' }
+    } catch (error) {
+      return getAuthErrorMessage(error, 'Не удалось войти через Telegram.')
+    }
+  }
+
+  const linkMessengerAccount = async (credentials: { username: string; password: string }) => {
+    if (!pendingMessengerLinkToken.value) {
+      return { success: false, message: 'Сессия Telegram не найдена. Откройте Mini App заново.' } as AuthResult
+    }
+
+    try {
+      const response = await apiClient.post('/auth/messenger/link/', {
+        telegram_link_token: pendingMessengerLinkToken.value,
+        username: credentials.username,
+        password: credentials.password
+      })
+
+      applyMessengerAuth('telegram', response.data.access_token, response.data.refresh_token)
+      setHasPasswordLogin(true)
+      await fetchProfile()
+      return { success: true } as AuthResult
+    } catch (error) {
+      return getAuthErrorMessage(error, 'Не удалось привязать Telegram к аккаунту.')
+    }
+  }
+
+  const registerMessengerAccount = async () => {
+    if (!pendingMessengerLinkToken.value) {
+      return { success: false, message: 'Сессия Telegram не найдена. Откройте Mini App заново.' } as AuthResult
+    }
+
+    try {
+      const response = await apiClient.post('/auth/messenger/register/', {
+        telegram_link_token: pendingMessengerLinkToken.value
+      })
+
+      applyMessengerAuth('telegram', response.data.access_token, response.data.refresh_token)
+      setHasPasswordLogin(false)
+      await fetchProfile()
+      return { success: true } as AuthResult
+    } catch (error) {
+      return getAuthErrorMessage(error, 'Не удалось создать аккаунт через Telegram.')
+    }
+  }
+
+  const setPasswordLogin = async (credentials: { username: string; password: string; email?: string }) => {
+    try {
+      return updateProfile(credentials)
+    } catch (error) {
+      return getAuthErrorMessage(error, 'Не удалось сохранить логин и пароль.')
     }
   }
 
@@ -169,12 +303,19 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = null
     refreshToken.value = null
     messenger.value = null
+    pendingMessengerLinkToken.value = null
 
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('messenger')
+    localStorage.removeItem('accountEmail')
+    localStorage.removeItem('hasPasswordLogin')
+    localStorage.removeItem('userGender')
 
     username.value = null
+    accountEmail.value = null
+    hasPasswordLogin.value = false
+    userGender.value = 'unspecified'
     telegramPhoto.value = null
     localStorage.removeItem('username')
   }
@@ -185,11 +326,20 @@ export const useAuthStore = defineStore('auth', () => {
     messenger,
     isAuthenticated,
     username,
+    accountEmail,
+    userGender,
+    hasPasswordLogin,
     telegramPhoto,
+    pendingMessengerLinkToken,
     setTokens,
+    fetchProfile,
+    updateProfile,
     login,
     register,
     messengerLogin,
+    linkMessengerAccount,
+    registerMessengerAccount,
+    setPasswordLogin,
     setTelegramUserData,
     refreshAccessToken,
     logout

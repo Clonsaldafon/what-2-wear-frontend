@@ -161,7 +161,6 @@ export const useWeatherStore = defineStore('weather', () => {
         params: { city: city.value }
       })
 
-      console.log(data)
 
       currentWeather.value = {
         city: formatDisplayCity(data.city),

@@ -13,13 +13,38 @@ import ClothesMessageAuthenticate from '../clothes/ClothesMessageAuthenticate.vu
 import WeatherLoading from '../loading/WeatherLoading.vue'
 import LoginModal from '../auth/LoginModal.vue'
 import RegisterModal from '../auth/RegisterModal.vue'
+import TelegramAuthModal from '../auth/TelegramAuthModal.vue'
 
+import { useAuthStore, type UserGender } from '@/stores/auth'
+import { ROUTES } from '@/utils/constants'
+
+const ACCOUNT_NOTICE_DISMISSED_UNTIL_KEY = 'accountNoticeDismissedUntil'
+const GENDER_PROMPT_DISMISSED_UNTIL_KEY = 'genderPromptDismissedUntil'
+const ACCOUNT_NOTICE_DISMISS_MS = 24 * 60 * 60 * 1000
+
+const authStore = useAuthStore()
 const weatherStore = useWeatherStore()
 const { currentWeather, hourlyForecast, loading, error } = storeToRefs(weatherStore)
 
-type ModalView = 'clothes' | 'login' | 'register' | null
+type ModalView = 'clothes' | 'login' | 'register' | 'telegram' | null
 
 const activeModal = ref<ModalView>(null)
+const accountNoticeDismissedUntil = ref(Number(localStorage.getItem(ACCOUNT_NOTICE_DISMISSED_UNTIL_KEY) || 0))
+const genderPromptDismissedUntil = ref(Number(localStorage.getItem(GENDER_PROMPT_DISMISSED_UNTIL_KEY) || 0))
+
+
+const showAccountNotice = computed(() => (
+  authStore.isAuthenticated
+  && authStore.messenger === 'telegram'
+  && !authStore.hasPasswordLogin
+  && Date.now() >= accountNoticeDismissedUntil.value
+))
+
+const onAccountNoticeDismiss = () => {
+  const dismissedUntil = Date.now() + ACCOUNT_NOTICE_DISMISS_MS
+  accountNoticeDismissedUntil.value = dismissedUntil
+  localStorage.setItem(ACCOUNT_NOTICE_DISMISSED_UNTIL_KEY, String(dismissedUntil))
+}
 
 const precipitationProbability = computed(() => {
   const hourlyProbability = hourlyForecast.value.length
@@ -78,6 +103,28 @@ const weatherDetails = computed(() => {
   ]
 })
 
+
+const genderSaving = ref(false)
+
+const showGenderPrompt = computed(() => (
+  authStore.isAuthenticated
+  && authStore.userGender === 'unspecified'
+  && !loading.value
+  && Date.now() >= genderPromptDismissedUntil.value
+))
+
+const onGenderSelect = async (gender: UserGender) => {
+  genderSaving.value = true
+  await authStore.updateProfile({ gender })
+  genderSaving.value = false
+}
+
+const onGenderPromptDismiss = () => {
+  const dismissedUntil = Date.now() + ACCOUNT_NOTICE_DISMISS_MS
+  genderPromptDismissedUntil.value = dismissedUntil
+  localStorage.setItem(GENDER_PROMPT_DISMISSED_UNTIL_KEY, String(dismissedUntil))
+}
+
 const onCitySearch = async (cityName: string) => {
   weatherStore.setCity(cityName)
 
@@ -96,7 +143,7 @@ const onClothesMessageOpen = () => {
   activeModal.value = 'clothes'
 }
 
-const onAuthOpen = (view: Extract<ModalView, 'login' | 'register'> = 'login') => {
+const onAuthOpen = (view: Extract<ModalView, 'login' | 'register' | 'telegram'> = 'login') => {
   activeModal.value = view
 }
 
@@ -113,7 +160,51 @@ const onModalClose = () => {
   <section class="weather section container">
     <h1 class="section__title h1 visually-hidden">Погода в текущий момент</h1>
     <div class="weather__body">
-      <CitySearch @search="onCitySearch" />
+      <aside
+        v-if="showAccountNotice && !loading"
+        class="weather-account-notice"
+      >
+        <div class="weather-account-notice__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3L19 6V11C19 15.4 16.2 19.3 12 20.8C7.8 19.3 5 15.4 5 11V6L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 15H12.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="weather-account-notice__content">
+          <strong class="weather-account-notice__title">Защитите доступ к аккаунту</strong>
+          <span class="weather-account-notice__text">Добавьте почту и пароль, чтобы не потерять доступ к аккаунту.</span>
+          <RouterLink
+            class="weather-account-notice__link"
+            :to="{ name: ROUTES.PROFILE }"
+          >
+            Заполнить профиль
+          </RouterLink>
+        </div>
+        <button
+          class="weather-account-notice__dismiss"
+          type="button"
+          aria-label="Скрыть сообщение на сутки"
+          @click="onAccountNoticeDismiss"
+        >
+          <span aria-hidden="true"></span>
+        </button>
+      </aside>
+      <div
+        v-if="showGenderPrompt"
+        class="weather-gender-prompt"
+      >
+        <div class="weather-gender-prompt__text">
+          <strong>Подстроить рекомендации?</strong>
+          <span>Выберите пол, чтобы комплекты одежды стали точнее.</span>
+        </div>
+        <div class="weather-gender-prompt__actions">
+          <button type="button" :disabled="genderSaving" @click="onGenderSelect('female')">Женский</button>
+          <button type="button" :disabled="genderSaving" @click="onGenderSelect('male')">Мужской</button>
+          <button type="button" :disabled="genderSaving" @click="onGenderPromptDismiss">Позже</button>
+        </div>
+      </div>
+      <CitySearch v-if="!loading" @search="onCitySearch" />
       <WeatherLoading v-if="loading" />
       <div
         v-if="currentWeather && !loading"
@@ -162,6 +253,16 @@ const onModalClose = () => {
       #modal
     >
       <ClothesMessageAuthenticate @authOpen="onAuthOpen" />
+    </template>
+    <template
+      v-else-if="activeModal === 'telegram'"
+      #modal
+    >
+      <TelegramAuthModal
+        @close="onModalClose"
+        @switch="onAuthOpen('login')"
+        @success="onModalClose"
+      />
     </template>
     <template
       v-else-if="activeModal === 'login'"
@@ -236,6 +337,173 @@ const onModalClose = () => {
     }
   }
 }
+
+
+
+.weather-gender-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: rem(14);
+  width: 100%;
+  max-width: rem(760);
+  padding: rem(14) rem(16);
+  background-color: var(--color-light-alt);
+  border: rem(1) solid var(--color-gray);
+  border-radius: rem(18);
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    row-gap: rem(4);
+
+    span {
+      color: var(--color-dark-alt);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(8);
+
+    button {
+      min-height: rem(36);
+      padding: rem(8) rem(12);
+      color: var(--color-dark);
+      font-weight: 600;
+      border: rem(1) solid var(--color-gray);
+      border-radius: rem(18);
+
+      @include hover {
+        color: var(--color-light);
+        background-color: var(--color-accent);
+        border-color: var(--color-accent);
+      }
+    }
+  }
+
+  @include mobile-l {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+.weather-account-notice {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: rem(14);
+  width: 100%;
+  max-width: rem(760);
+  padding: rem(18) rem(18);
+  color: var(--color-dark);
+  background-color: var(--color-light-alt);
+  border: rem(1) solid rgba(46, 125, 100, 0.32);
+  border-left: rem(6) solid var(--color-accent);
+  border-radius: rem(20);
+  box-shadow: 0 rem(12) rem(34) rgba(46, 125, 100, 0.14);
+
+  &__icon {
+    @include square(48);
+    @include flex-center;
+
+    color: var(--color-accent);
+    background-color: rgba(46, 125, 100, 0.12);
+    border-radius: rem(14);
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    row-gap: rem(8);
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: rem(18);
+    font-weight: 700;
+  }
+
+  &__text {
+    max-width: rem(560);
+    color: var(--color-dark-alt);
+    line-height: 1.45;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: rem(38);
+    padding: rem(8) rem(14);
+    color: var(--color-light);
+    font-weight: 700;
+    background-color: var(--color-accent);
+    border-radius: rem(18);
+
+    @include hover {
+      color: var(--color-accent);
+      background-color: var(--color-light);
+    }
+  }
+
+  &__dismiss {
+    @include square(36);
+    @include flex-center;
+
+    color: var(--color-dark-alt);
+    border-radius: rem(10);
+
+    @include hover {
+      color: var(--color-dark);
+      background-color: rgba(46, 125, 100, 0.10);
+    }
+
+    span {
+      position: relative;
+      display: block;
+      width: rem(18);
+      height: rem(18);
+
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: rem(2);
+        background-color: currentColor;
+        border-radius: rem(2);
+      }
+
+      &::before {
+        rotate: 45deg;
+      }
+
+      &::after {
+        rotate: -45deg;
+      }
+    }
+  }
+
+  @include mobile-l {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: rem(16);
+
+    &__dismiss {
+      position: absolute;
+      top: rem(10);
+      right: rem(10);
+    }
+
+    &__content {
+      padding-right: rem(28);
+    }
+  }
+}
+
 
 .weather-detail-card {
   display: flex;

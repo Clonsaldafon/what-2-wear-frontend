@@ -10,56 +10,84 @@ import Menu from './menu/Menu.vue'
 import { useAuthStore } from '@/stores/auth'
 import MenuMobile from './menu/mobile/MenuMobile.vue'
 
+type TelegramWebApp = {
+  initData?: string
+  initDataUnsafe?: any
+  ready?: () => void
+  expand?: () => void
+}
+
+const emit = defineEmits(['clothesMessageOpen', 'authOpen'])
+
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isTelegram = ref(false)
+const telegramAuthChecking = ref(false)
 const messenger = computed(() => authStore.messenger)
 
-const initDataRaw = ref<string | undefined>(undefined)
-const initDataParsed = ref<any>(null)
+const getTelegramWebApp = () => {
+  return (window as any).Telegram?.WebApp as TelegramWebApp | undefined
+}
+
+const getTelegramContext = async () => {
+  const webApp = getTelegramWebApp()
+  let initDataRaw = webApp?.initData || ''
+  let initDataParsed = webApp?.initDataUnsafe || null
+  let isTelegramEnvironment = Boolean(initDataRaw || initDataParsed?.user)
+
+  try {
+    const sdkIsTelegram = await Promise.resolve(isTMA())
+    isTelegramEnvironment = isTelegramEnvironment || sdkIsTelegram
+
+    if (sdkIsTelegram) {
+      const launchParams = retrieveLaunchParams()
+      initDataParsed = launchParams.tgWebAppData || initDataParsed
+      initDataRaw = retrieveRawInitData() || initDataRaw
+    }
+  } catch {
+    // Fallback to window.Telegram.WebApp above.
+  }
+
+  return {
+    isTelegramEnvironment,
+    initDataRaw,
+    initDataParsed,
+  }
+}
 
 onMounted(async () => {
+  const webApp = getTelegramWebApp()
+  webApp?.ready?.()
+  webApp?.expand?.()
+
+  telegramAuthChecking.value = true
+
   try {
-    isTelegram.value = isTMA()
-  
-    if (isTelegram.value) {
-      const { tgWebAppData } = retrieveLaunchParams()
-      initDataParsed.value = tgWebAppData
-      initDataRaw.value = retrieveRawInitData()
+    const { isTelegramEnvironment, initDataRaw, initDataParsed } = await getTelegramContext()
+    isTelegram.value = isTelegramEnvironment
 
-      authStore.setTelegramUserData(initDataParsed.value)
+    if (!isTelegramEnvironment) return
 
-      if (!authStore.isAuthenticated) {
-        const telegramUserId = initDataParsed.value?.user?.id
-        
-        if (telegramUserId) {
-          const success = await authStore.messengerLogin(
-            'telegram',
-            String(telegramUserId),
-            initDataRaw.value
-          )
-          
-          if (success) {
-            console.log('Авторизация через Telegram успешна')
-          } else {
-            console.error('Не удалось авторизоваться через Telegram')
-          }
-        } else {
-          console.warn('Не удалось получить Telegram user id из initData')
-        }
-      } else {
-        console.log('Пользователь уже авторизован, пропускаем messengerLogin')
-      }
-    } else {
-      console.log('Вход через браузер')
+    authStore.setTelegramUserData(initDataParsed)
+
+    if (authStore.isAuthenticated) return
+
+    const telegramUserId = initDataParsed?.user?.id
+    if (!telegramUserId || !initDataRaw) return
+
+    const result = await authStore.messengerLogin(
+      'telegram',
+      String(telegramUserId),
+      initDataRaw
+    )
+
+    if (result.status === 'needs_account_link') {
+      emit('authOpen', 'telegram')
     }
-  } catch (err) {
-    console.error('Ошибка при проверке окружения:', err)
-    isTelegram.value = false
+  } finally {
+    telegramAuthChecking.value = false
   }
 })
-
-const emit = defineEmits(['clothesMessageOpen', 'authOpen'])
 
 const onAuthOpen = () => {
   emit('authOpen', 'login')
@@ -76,7 +104,7 @@ const onAuthOpen = () => {
     />
     <div class="header__actions">
       <Button
-        v-if="!isAuthenticated && !messenger"
+        v-if="!isAuthenticated && !messenger && !telegramAuthChecking"
         :hasIcon="true"
         :accent="true"
         @click="onAuthOpen"

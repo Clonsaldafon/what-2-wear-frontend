@@ -4,34 +4,38 @@ import { storeToRefs } from 'pinia'
 
 import Header from '../header/Header.vue'
 import ClothesLoading from '../loading/ClothesLoading.vue'
-import ClothesFeedbackModal from '../clothes/ClothesFeedbackModal.vue'
-import Overlay from '../Overlay.vue'
-import Button from '../buttons/Button.vue'
+import ClothesFeedback from '../clothes/ClothesFeedback.vue'
 import WardrobeItemCard from '../profile/WardrobeItemCard.vue'
 
 import { useWeatherStore } from '@/stores/weather'
-import { useWardrobeStore } from '@/stores/wardrobes'
-import type { ClothingItem } from '@/stores/wardrobes'
-import { useAuthStore } from '@/stores/auth'
 import CitySearch from '../CitySearch.vue'
 
 // константы
 const UMBRELLA_ACCESSORIES = new Set(['umbrella'])
 const UMBRELLA_PROBABILITY_THRESHOLD = 50
+const FEEDBACK_REQUEST_COUNT_KEY = 'clothesFeedbackRequestCount'
+const FEEDBACK_LAST_COUNTED_REQUEST_KEY = 'clothesFeedbackLastCountedRequestId'
 
-const authStore = useAuthStore()
 const weatherStore = useWeatherStore()
-const wardrobeStore = useWardrobeStore()
-
 const { city, currentWeather, hourlyForecast, loading } = storeToRefs(weatherStore)
-const isFeedbackModalOpen = ref(false)
 const feedbackSubmitting = ref(false)
 const feedbackSubmitted = ref(false)
 const feedbackError = ref<string | null>(null)
+const feedbackPromptRequestId = ref<number | null>(null)
+const feedbackRequestCount = ref(Number(localStorage.getItem(FEEDBACK_REQUEST_COUNT_KEY) || 0))
 
 // город для заголовка
 const heroCity = computed(() => currentWeather.value?.city || city.value || '')
 const recommendation = computed(() => currentWeather.value?.recommendation ?? null)
+const canCollectFeedback = computed(() => Boolean(
+  currentWeather.value?.recommendation_source === 'ml'
+  && currentWeather.value?.request_id
+))
+const showFeedbackPrompt = computed(() => Boolean(
+  canCollectFeedback.value
+  && currentWeather.value?.request_id === feedbackPromptRequestId.value
+  && !feedbackSubmitted.value
+))
 
 const onCitySearch = async (cityName: string) => {
   weatherStore.setCity(cityName)
@@ -104,15 +108,13 @@ onMounted(async () => {
 // -------------------------------------------------------------------
 // Обработка оценки
 // -------------------------------------------------------------------
-const onFeedbackOpen = () => {
-  feedbackError.value = null
-  isFeedbackModalOpen.value = true
-}
-const onFeedbackClose = () => {
-  if (feedbackSubmitting.value) return
-  isFeedbackModalOpen.value = false
-}
 type ClothingFeedbackRating = 'good' | 'too_cold' | 'too_warm' | 'wet' | 'corrected' | 'score'
+
+const onFeedbackDismiss = () => {
+  feedbackPromptRequestId.value = null
+  feedbackError.value = null
+}
+
 const onFeedbackSubmit = async (payload: {
   score: number
   rating?: ClothingFeedbackRating
@@ -129,20 +131,36 @@ const onFeedbackSubmit = async (payload: {
       comment: payload.comment
     })
     feedbackSubmitted.value = true
-    isFeedbackModalOpen.value = false
+    feedbackPromptRequestId.value = null
   } catch {
     feedbackError.value = 'Не удалось отправить оценку. Попробуйте еще раз.'
   } finally {
     feedbackSubmitting.value = false
   }
 }
+
 watch(
   () => currentWeather.value?.request_id,
-  () => {
+  (requestId) => {
     feedbackSubmitted.value = false
     feedbackError.value = null
-    isFeedbackModalOpen.value = false
-  }
+    feedbackPromptRequestId.value = null
+
+    if (!requestId || !canCollectFeedback.value) return
+
+    const lastCountedRequestId = Number(localStorage.getItem(FEEDBACK_LAST_COUNTED_REQUEST_KEY) || 0)
+    if (lastCountedRequestId === requestId) return
+
+    const nextCount = feedbackRequestCount.value + 1
+    feedbackRequestCount.value = nextCount
+    localStorage.setItem(FEEDBACK_REQUEST_COUNT_KEY, String(nextCount))
+    localStorage.setItem(FEEDBACK_LAST_COUNTED_REQUEST_KEY, String(requestId))
+
+    if (nextCount % 3 === 0) {
+      feedbackPromptRequestId.value = requestId
+    }
+  },
+  { immediate: true }
 )
 </script>
 
@@ -165,20 +183,16 @@ watch(
 
     <!-- основной контент -->
     <div v-else class="clothes__content">
-      <!-- сообщение о дожде -->
       <div v-if="needsUmbrella" class="clothes__rain-message">
-        <svg
-          class="clothes__rain-message-icon"
-          width="32" height="32" viewBox="0 0 32 32"
-          fill="none"
-        >
-          <path d="M29.3062 15.0672C29.3158 15.0304 29.327 14.9952 29.3286 14.9568C29.3291 14.9488 29.3334 14.9419 29.3334 14.9333C29.3334 7.76 23.639 1.89493 16.5334 1.61333V0.533333C16.5334 0.2384 16.2945 0 16.0001 0C15.7057 0 15.4667 0.2384 15.4667 0.533333V1.61333C8.36115 1.89493 2.66675 7.76 2.66675 14.9333C2.66675 14.9419 2.67101 14.9488 2.67155 14.9573C2.67315 14.9952 2.68381 15.0304 2.69395 15.0677C2.70248 15.0992 2.70728 15.1307 2.72061 15.1595C2.73395 15.1877 2.75475 15.2112 2.77288 15.2368C2.79528 15.2683 2.81608 15.2997 2.84488 15.3259C2.85075 15.3312 2.85341 15.3392 2.85981 15.3445C2.87901 15.3605 2.90248 15.3659 2.92275 15.3787C2.95421 15.3984 2.98408 15.4181 3.01981 15.4309C3.05715 15.4448 3.09501 15.4491 3.13341 15.4539C3.15635 15.456 3.17661 15.4667 3.20008 15.4667C3.20808 15.4667 3.21448 15.4624 3.22248 15.4624C3.26301 15.4608 3.30088 15.4496 3.33981 15.4389C3.36861 15.4309 3.39795 15.4267 3.42408 15.4139C3.45448 15.4 3.47955 15.3776 3.50728 15.3579C3.53661 15.3365 3.56648 15.3168 3.59101 15.2901C3.59688 15.2837 3.60488 15.2811 3.61075 15.2741C4.36275 14.3664 5.35368 13.8667 6.40008 13.8667C7.44648 13.8667 8.43741 14.3664 9.18941 15.2741C9.19955 15.2864 9.21501 15.2912 9.22621 15.3024C9.23901 15.3152 9.24541 15.3323 9.25981 15.344C9.28115 15.3616 9.30675 15.368 9.32915 15.3819C9.35635 15.3984 9.38141 15.4149 9.41021 15.4256C9.45395 15.4427 9.49768 15.4496 9.54301 15.4544C9.56275 15.4565 9.58088 15.4667 9.60008 15.4667C9.60861 15.4667 9.61661 15.4629 9.62461 15.4624C9.65181 15.4613 9.67688 15.4544 9.70355 15.4491C9.74035 15.4416 9.77555 15.4331 9.81021 15.4176C9.83688 15.4059 9.86088 15.3909 9.88541 15.3744C9.90301 15.3632 9.92275 15.3573 9.93928 15.3435C9.95208 15.3328 9.95795 15.3179 9.96968 15.3061C9.98195 15.2939 9.99848 15.2875 10.0097 15.2736C10.7627 14.3664 11.7537 13.8667 12.8001 13.8667C13.7921 13.8667 14.7307 14.32 15.4667 15.1392V29.3333C15.4667 30.2155 14.7489 30.9333 13.8667 30.9333C12.9846 30.9333 12.2667 30.2155 12.2667 29.3333C12.2667 29.0384 12.0278 28.8 11.7334 28.8C11.439 28.8 11.2001 29.0384 11.2001 29.3333C11.2001 30.8037 12.3963 32 13.8667 32C15.3371 32 16.5334 30.8037 16.5334 29.3333V15.1392C17.2694 14.32 18.2081 13.8667 19.2001 13.8667C20.2465 13.8667 21.2374 14.3664 21.9894 15.2741C21.9995 15.2864 22.015 15.2912 22.0262 15.3024C22.039 15.3152 22.0454 15.3323 22.0598 15.344C22.0811 15.3616 22.1067 15.3675 22.1291 15.3813C22.1563 15.3979 22.1814 15.4144 22.2107 15.4256C22.2539 15.4421 22.2977 15.4496 22.3435 15.4544C22.3627 15.4565 22.3809 15.4667 22.4001 15.4667C22.4086 15.4667 22.4166 15.4629 22.4246 15.4624C22.4518 15.4613 22.4774 15.4544 22.5041 15.4485C22.5403 15.4411 22.5755 15.4325 22.6102 15.4176C22.6374 15.4059 22.6614 15.3904 22.6859 15.3744C22.7035 15.3632 22.7233 15.3573 22.7398 15.344C22.7526 15.3333 22.7585 15.3184 22.7697 15.3067C22.7819 15.2944 22.7985 15.288 22.8102 15.2741C23.5627 14.3664 24.5537 13.8667 25.6001 13.8667C26.6465 13.8667 27.6374 14.3664 28.3894 15.2741C28.3947 15.2805 28.4022 15.2821 28.4081 15.2885C28.4454 15.3296 28.4902 15.3605 28.5387 15.3888C28.5553 15.3984 28.5681 15.4128 28.5857 15.4203C28.6513 15.4491 28.7233 15.4667 28.8001 15.4667C28.8657 15.4667 28.9307 15.4523 28.9926 15.4277C29.0166 15.4181 29.0363 15.4027 29.0587 15.3899C29.0859 15.3744 29.1153 15.3643 29.1398 15.3435C29.1462 15.3381 29.1489 15.3307 29.1547 15.3248C29.1835 15.2987 29.2038 15.2677 29.2267 15.2357C29.2449 15.2101 29.2657 15.1861 29.279 15.1584C29.2929 15.1301 29.2982 15.0987 29.3062 15.0672ZM25.6001 12.8C24.4171 12.8 23.3003 13.2773 22.4001 14.1515C21.4998 13.2773 20.383 12.8 19.2001 12.8C18.0171 12.8 16.9003 13.2773 16.0001 14.1515C15.0998 13.2773 13.983 12.8 12.8001 12.8C11.6171 12.8 10.5003 13.2773 9.60008 14.1515C8.69981 13.2773 7.58301 12.8 6.40008 12.8C5.46675 12.8 4.57715 13.1019 3.80008 13.656C4.44115 7.49013 9.66781 2.66667 16.0001 2.66667C22.3323 2.66667 27.559 7.49013 28.2001 13.656C27.423 13.1019 26.5334 12.8 25.6001 12.8Z" fill="#5C8BB5"/>
-        </svg>
+        <span class="clothes__rain-message-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 11.5C4 7.4 7.4 4 11.5 4C15.6 4 19 7.4 19 11.5V12H4V11.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M11.5 4V2.5M11.5 12V20C11.5 21.1 10.6 22 9.5 22C8.4 22 7.5 21.1 7.5 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4 12C5.2 10.9 6.6 10.9 8 12C9.2 10.9 10.7 10.9 12 12C13.3 10.9 14.8 10.9 16 12C17.4 10.9 18.8 10.9 20 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <div class="clothes__rain-message-info">
           <h2 class="clothes__rain-message-title h3">Возможен дождь</h2>
-          <div class="clothes__rain-message-description">
-            <p>Не забудьте взять зонт</p>
-          </div>
         </div>
       </div>
 
@@ -205,12 +219,14 @@ watch(
         </div>
       </div>
 
-      <!-- кнопка оценки -->
-      <div v-if="currentWeather?.recommendation_source === 'ml' && currentWeather?.request_id && !feedbackSubmitted" class="clothes__feedback">
-        <Button :accent="true" @click="onFeedbackOpen">
-          <template #text>Оценить</template>
-        </Button>
-      </div>
+      <ClothesFeedback
+        v-if="showFeedbackPrompt"
+        class="clothes__feedback"
+        :submitting="feedbackSubmitting"
+        :error="feedbackError"
+        @dismiss="onFeedbackDismiss"
+        @submit="onFeedbackSubmit"
+      />
       <p v-else-if="feedbackSubmitted" class="clothes__feedback-thanks">
         Спасибо, оценка отправлена.
       </p>
@@ -223,18 +239,6 @@ watch(
       @search="onCitySearch"
     />
   </section>
-
-  <!-- модалка оценки -->
-  <Overlay v-if="isFeedbackModalOpen" :onClose="onFeedbackClose">
-    <template #modal>
-      <ClothesFeedbackModal
-        :submitting="feedbackSubmitting"
-        :error="feedbackError"
-        @close="onFeedbackClose"
-        @submit="onFeedbackSubmit"
-      />
-    </template>
-  </Overlay>
 </template>
 
 <style scoped lang="scss">
@@ -273,8 +277,12 @@ watch(
     }
     &-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: minmax(0, rem(260));
       gap: rem(16);
+
+      @include mobile-l {
+        grid-template-columns: 1fr;
+      }
     }
   }
 
@@ -306,35 +314,74 @@ watch(
   }
 
   &__rain-message {
+    position: relative;
     display: flex;
     align-items: center;
-    column-gap: rem(20);
-    padding: rem(20);
-    color: var(--color-rain);
-    background-color: var(--color-light-alt);
-    border: rem(1) solid var(--color-gray);
-    border-radius: rem(15);
+    column-gap: rem(14);
+    padding: rem(16) rem(18) rem(16) rem(20);
+    color: var(--color-dark);
+    background-color: rgba(92, 139, 181, 0.1);
+    border: rem(1) solid rgba(92, 139, 181, 0.28);
+    border-radius: rem(18);
+    box-shadow: 0 rem(10) rem(28) rgba(92, 139, 181, 0.08);
+
+    &::before {
+      position: absolute;
+      inset: rem(12) auto rem(12) 0;
+      width: rem(4);
+      background-color: var(--color-rain);
+      border-radius: 0 rem(99) rem(99) 0;
+      content: '';
+    }
 
     &-icon {
-      @include square(32);
+      @include square(48);
+      @include flex-center;
+
+      flex: 0 0 rem(48);
+      color: var(--color-rain);
+      background-color: var(--color-light-alt);
+      border: rem(1) solid rgba(92, 139, 181, 0.22);
+      border-radius: rem(16);
     }
 
     &-info {
       display: flex;
       flex-direction: column;
-      row-gap: rem(5);
+      row-gap: rem(4);
+      min-width: 0;
     }
 
-    &-description {
-      @include fluid-text(18, 14);
+    &-title {
+      margin: 0;
+      color: var(--color-dark);
+      font-size: rem(18);
+    }
+
+    @include mobile-l {
+      align-items: flex-start;
+      padding: rem(14) rem(14) rem(14) rem(16);
+
+      &-icon {
+        @include square(42);
+
+        flex-basis: rem(42);
+        border-radius: rem(14);
+      }
     }
   }
 
   &__feedback {
-    margin-top: rem(16);
+    margin-top: rem(4);
+
     &-thanks {
+      align-self: flex-start;
+      padding: rem(12) rem(14);
       font-weight: 700;
       color: var(--color-accent);
+      background-color: rgba(46, 125, 100, 0.08);
+      border: rem(1) solid rgba(46, 125, 100, 0.18);
+      border-radius: rem(14);
     }
   }
 }

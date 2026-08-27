@@ -44,11 +44,15 @@ defineEmits<{
 
 .auth-modal {
   width: min(100%, rem(520));
-  padding: rem(24);
+  max-height: min(92vh, rem(720));
+  padding: rem(26) rem(24) rem(30);
   background-color: var(--color-light-alt);
   border: rem(1) solid rgba(24, 169, 123, 0.18);
   border-radius: rem(30);
   box-shadow: 0 rem(20) rem(60) rgba(44, 44, 44, 0.16);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: rem(24);
   z-index: 1001;
   animation: modalIn 0.25s forwards;
 
@@ -99,7 +103,7 @@ defineEmits<{
   }
 
   @include mobile {
-    padding: rem(18);
+    padding: rem(20) rem(18) rem(26);
     border-radius: rem(24);
   }
 }
