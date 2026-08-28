@@ -94,41 +94,49 @@ export const useWeatherStore = defineStore('weather', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   let abortController: AbortController | null = null
+  let suggestionsRequestId = 0
 
   const fetchCitySuggestions = async (query: string) => {
-    if (abortController) {
-      abortController.abort()
-    }
+    abortController?.abort()
 
-    if (!query || query.length < 2) {
+    const trimmedQuery = query.trim()
+
+    if (trimmedQuery.length < 2) {
       suggestions.value = []
       error.value = null
+      loading.value = false
       return
     }
 
+    const requestId = ++suggestionsRequestId
+    const controller = new AbortController()
+    abortController = controller
+
     loading.value = true
     error.value = null
-    suggestions.value = []
-
-    abortController = new AbortController()
 
     try {
-      const response = await apiClient.get('/weather/city-autocomplete/', {
-        params: { q: query },
-        signal: abortController.signal
+      const response = await apiClient.get<CitySuggestion[]>('/weather/city-autocomplete/', {
+        params: { q: trimmedQuery },
+        signal: controller.signal
       })
 
-      suggestions.value = response.data
+      if (requestId === suggestionsRequestId) {
+        suggestions.value = response.data
+      }
     } catch (err) {
-      if ((err as Error).name === 'AbortError') return
+      if (controller.signal.aborted || (err as Error).name === 'CanceledError') return
 
-      error.value = getApiErrorMessage(err, 'Ошибка при загрузке городов');
-      errorStore.setError('Ошибка поиска города', error.value)
-
-      suggestions.value = []
+      if (requestId === suggestionsRequestId) {
+        error.value = getApiErrorMessage(err, 'Ошибка при загрузке городов')
+        errorStore.setError('Ошибка поиска города', error.value)
+        suggestions.value = []
+      }
     } finally {
-      loading.value = false
-      abortController = null
+      if (requestId === suggestionsRequestId) {
+        loading.value = false
+        abortController = null
+      }
     }
   }
 

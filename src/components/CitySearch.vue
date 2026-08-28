@@ -92,7 +92,7 @@ const moveSelection = (direction: number) => {
         placeholder="Введите город"
         v-model="searchQuery"
         @input="onSearchInput"
-        @keyup.enter="onSelectCity(selectedCityIndex)"
+        @keyup.enter="onSearch"
         @keydown.down="moveSelection(1)"
         @keydown.up="moveSelection(-1)"
       />
@@ -131,11 +131,11 @@ const moveSelection = (direction: number) => {
       </button>
 
     <ul
-      v-if="searchQuery.trim() && weatherStore.suggestions.length > 0"
+      v-if="searchQuery.trim() && suggestions.length > 0"
       class="city-search__list"
     >
       <li
-        v-for="(city, index) in weatherStore.suggestions"
+        v-for="(city, index) in suggestions"
         :key="city.id"
         :class="`city-search__item ${ index === selectedCityIndex ? 'city-search__item--active' : '' }`"
         @click="onSelectCity(index)"
