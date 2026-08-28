@@ -62,39 +62,53 @@ const needsUmbrella = computed(() => {
   return hasUmbrella || Boolean(currentWeather.value?.has_precipitation)
 })
 
-// список категорий с карточками и fallback-списками
-const categories = computed(() => [
-  {
-    key: 'outerwear',
-    title: 'Верхняя одежда',
-    match: currentWeather.value?.wardrobe_matches?.outerwear ?? null,
-    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Верхняя одежда:')) || ''
-  },
-  {
-    key: 'top',
-    title: 'Верх',
-    match: currentWeather.value?.wardrobe_matches?.top ?? null,
-    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Верх:') || i.startsWith('Базовый верх:')) || ''
-  },
-  {
-    key: 'bottom',
-    title: 'Низ',
-    match: currentWeather.value?.wardrobe_matches?.bottom ?? null,
-    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Низ:')) || ''
-  },
-  {
-    key: 'footwear',
-    title: 'Обувь',
-    match: currentWeather.value?.wardrobe_matches?.footwear ?? null,
-    fallbackText: recommendation.value?.items?.find(i => i.startsWith('Обувь:')) || ''
-  }
-])
-
-const getFallbackItems = (fallbackText: string): string[] => {
+const getFallbackItemsFromText = (fallbackText: string): string[] => {
   if (!fallbackText) return []
+
   const afterColon = fallbackText.split(':')[1] || ''
   return afterColon.split(',').map(s => s.trim()).filter(Boolean)
 }
+
+const getRecommendedItems = (title: string, fallbackText: string): string[] => {
+  const alternatives = recommendation.value?.alternatives?.[title] ?? []
+
+  return alternatives.length ? alternatives : getFallbackItemsFromText(fallbackText)
+}
+
+// список категорий с карточками и fallback-списками
+const categories = computed(() => {
+  const outerwearText = recommendation.value?.items?.find(i => i.startsWith('Верхняя одежда:')) || ''
+  const topText = recommendation.value?.items?.find(i => i.startsWith('Верх:') || i.startsWith('Базовый верх:')) || ''
+  const bottomText = recommendation.value?.items?.find(i => i.startsWith('Низ:')) || ''
+  const footwearText = recommendation.value?.items?.find(i => i.startsWith('Обувь:')) || ''
+
+  return [
+    {
+      key: 'outerwear',
+      title: 'Верхняя одежда',
+      match: currentWeather.value?.wardrobe_matches?.outerwear ?? null,
+      fallbackItems: getRecommendedItems('Верхняя одежда', outerwearText)
+    },
+    {
+      key: 'top',
+      title: 'Верх',
+      match: currentWeather.value?.wardrobe_matches?.top ?? null,
+      fallbackItems: getRecommendedItems('Верх', topText)
+    },
+    {
+      key: 'bottom',
+      title: 'Низ',
+      match: currentWeather.value?.wardrobe_matches?.bottom ?? null,
+      fallbackItems: getRecommendedItems('Низ', bottomText)
+    },
+    {
+      key: 'footwear',
+      title: 'Обувь',
+      match: currentWeather.value?.wardrobe_matches?.footwear ?? null,
+      fallbackItems: getRecommendedItems('Обувь', footwearText)
+    }
+  ]
+})
 
 onMounted(async () => {
   if (weatherStore.city && !currentWeather.value && !loading.value) {
@@ -211,7 +225,7 @@ watch(
             />
             <!-- fallback: список вещей с маркерами -->
             <ul v-else class="clothes__fallback-list">
-              <li v-for="item in getFallbackItems(cat.fallbackText)" :key="item" class="clothes__fallback-item">
+              <li v-for="item in cat.fallbackItems" :key="item" class="clothes__fallback-item">
                 {{ item }}
               </li>
             </ul>
