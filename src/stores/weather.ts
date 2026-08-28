@@ -92,6 +92,7 @@ export const useWeatherStore = defineStore('weather', () => {
   const currentWeather = ref<CurrentWeather | null>(null)
   const hourlyForecast = ref<HourlyForecast[]>([])
   const loading = ref(false)
+  const suggestionsLoading = ref(false)
   const error = ref<string | null>(null)
   let abortController: AbortController | null = null
   let suggestionsRequestId = 0
@@ -104,7 +105,7 @@ export const useWeatherStore = defineStore('weather', () => {
     if (trimmedQuery.length < 2) {
       suggestions.value = []
       error.value = null
-      loading.value = false
+      suggestionsLoading.value = false
       return
     }
 
@@ -112,7 +113,7 @@ export const useWeatherStore = defineStore('weather', () => {
     const controller = new AbortController()
     abortController = controller
 
-    loading.value = true
+    suggestionsLoading.value = true
     error.value = null
 
     try {
@@ -134,7 +135,7 @@ export const useWeatherStore = defineStore('weather', () => {
       }
     } finally {
       if (requestId === suggestionsRequestId) {
-        loading.value = false
+        suggestionsLoading.value = false
         abortController = null
       }
     }
@@ -241,6 +242,7 @@ export const useWeatherStore = defineStore('weather', () => {
     currentWeather,
     hourlyForecast,
     loading,
+    suggestionsLoading,
     error,
     fetchCitySuggestions,
     setCity,

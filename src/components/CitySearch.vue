@@ -10,7 +10,7 @@ const emit = defineEmits<{
 }>()
 
 const weatherStore = useWeatherStore()
-const { suggestions, loading, error } = storeToRefs(weatherStore)
+const { suggestions, suggestionsLoading, error } = storeToRefs(weatherStore)
 
 const searchQuery = ref(weatherStore.city || '')
 const selectedCityIndex = ref(-1)
@@ -98,7 +98,7 @@ const moveSelection = (direction: number) => {
       />
       <button
         class="city-search__button hidden-mobile-l"
-        :disabled="loading"
+        :disabled="suggestionsLoading"
         @click="onSearch"
       >
         <svg
@@ -115,7 +115,7 @@ const moveSelection = (direction: number) => {
     </div>
     <button
         class="city-search__button visible-mobile-l"
-        :disabled="loading"
+        :disabled="suggestionsLoading"
         @click="onSearch"
       >
         <svg
