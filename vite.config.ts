@@ -18,8 +18,7 @@ export default defineConfig(({ mode }) => {
   const hmrProtocol = env.VITE_DEV_HMR_PROTOCOL || (hmrHost ? 'wss' : undefined)
   const hmrClientPort = toNumber(env.VITE_DEV_HMR_CLIENT_PORT)
   const allowedHosts = [
-    'murderously-monumental-chinchilla.cloudpub.ru',
-    'reverently-interested-lyrebird.cloudpub.ru',
+    'blatantly-profound-koel.cloudpub.ru',
     hmrHost,
   ].filter(Boolean) as string[]
 
